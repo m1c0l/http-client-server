@@ -1,0 +1,4 @@
+*.o
+*.dSYM
+web-server
+web-client
