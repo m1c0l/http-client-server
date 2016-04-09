@@ -11,7 +11,7 @@ string HttpMessage::getVersion(){
   return m_version;
 }
 
-string HttpMessage::setVersion(string ver){
+void HttpMessage::setVersion(string ver){
   m_version = ver;
 }
 

@@ -2,7 +2,7 @@
 #define HTTPRESPONSE_H
 
 #include <string>
-#include "httpmessage.h"
+#include "HttpMessage.h"
 using namespace std;
 
 typedef unsigned short HttpStatus;

@@ -1,8 +1,14 @@
+#include <sstream>
 #include "HttpResponse.h"
 using namespace std;
 
 void HttpResponse::decodeFirstLine(string line) {
+	stringstream ss;
+	ss << line;
 
+	string version;
+	ss >> version >> m_status >> m_statusDescription;
+	setVersion(version);
 }
 
 HttpStatus HttpResponse::getStatus() {
