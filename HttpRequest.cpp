@@ -1,4 +1,6 @@
-#include "httprequest.h"
+#include "HttpRequest.h"
+
+#include <sstream>
 
 string HttpRequest::getMethod() {
 	return m_method;
@@ -15,3 +17,8 @@ string HttpRequest::getUrl() {
 void HttpRequest::setUrl(string url) {
 	m_url = url;
 }
+
+void HttpRequest::decodeFirstLine(string line) {
+	stringstream ss;
+}
+

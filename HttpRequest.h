@@ -1,6 +1,6 @@
 #include <string>
 
-#include "httpmessage.h"
+#include "HttpMessage.h"
 
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
@@ -13,6 +13,7 @@ public:
 	void setMethod(string method); // ditto
 	string getUrl();
 	void setUrl(string url);
+	void decodeFirstLine(string line);
 };
 
 #endif
