@@ -10,6 +10,7 @@ class HttpMessage{
  public:
   //HttpMessage();
   string getversion();
+  string setversion(string ver);
   void setHeader(string key, string value);
   string getHeader(string key);
   void decodeHeaderLine(string line);
