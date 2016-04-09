@@ -5,8 +5,6 @@
 
 using namespace std;
 
-//virtual void HttpMessage::decodeFirstLine(string line) = 0;
-
 string HttpMessage::getVersion(){
   return m_version;
 }
