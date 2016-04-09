@@ -3,3 +3,4 @@
 .vagrant
 web-server
 web-client
+*.swp
