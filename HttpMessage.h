@@ -9,8 +9,9 @@ using namespace std;
 class HttpMessage{
  public:
   //HttpMessage();
-  string getversion();
-  string setversion(string ver);
+  virtual void decodeFirstLine(string line) = 0;
+  string getVersion();
+  string setVersion(string ver);
   void setHeader(string key, string value);
   string getHeader(string key);
   void decodeHeaderLine(string line);
