@@ -1,5 +1,5 @@
 #ifndef HTTPMESSAGE
-#def HTTPMESSAGE
+#define HTTPMESSAGE
 #include <string>
 #include <iostream>
 #include <stdlib>
