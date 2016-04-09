@@ -1,4 +1,4 @@
-#include httpmessage.h
+#include "HttpMessage.h"
 #include <string>
 #include <iostream>
 #include <map>
@@ -45,4 +45,15 @@ void HttpMessage::decodeHeaderLine(string line)
     }
   setHeader(key, value);
   return;
+}
+
+void HttpMessage::setPayLoad(string blob)
+{
+  m_payload = blob;
+  return;
+}
+
+string HttpMessage::getPayload()
+{
+  return m_payload;
 }
