@@ -10,9 +10,21 @@
 #include <iostream>
 #include <sstream>
 
+using namespace std;
+
 int
-main()
+main(int argc, char **argv)
 {
+	if (argc != 4) {
+		cerr << "usage: web-server [hostname] [port] [file-dir]" << '\n';
+		return 1;
+	}
+
+	string hostname = argv[1];
+	string port = argv[2];
+	string filedir = argv[3];
+
+
   // create a socket using TCP IP
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
