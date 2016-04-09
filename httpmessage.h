@@ -9,7 +9,7 @@ using namespace std;
 class HttpMessage{
  public:
   //HttpMessage();
-  float getversion();
+  string getversion();
   void setHeader(string key, string value);
   string getHeader(string key);
   void decodeHeaderLine(string line);
@@ -17,7 +17,7 @@ class HttpMessage{
   string getPayload();
 
  private:
-  float m_version;
+  string m_version;
   map<string, string> m_headers;
   string m_payload;
 
