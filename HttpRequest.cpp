@@ -20,5 +20,11 @@ void HttpRequest::setUrl(string url) {
 
 void HttpRequest::decodeFirstLine(string line) {
 	stringstream ss;
+	ss << line;
+	string method, url, version;
+	ss >> method >> url >> version;
+	setMethod(method);
+	setUrl(url);
+	setVersion(version);
 }
 
