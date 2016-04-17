@@ -27,7 +27,7 @@ string HttpMessage::getHeader(string key)
 void HttpMessage::decodeHeaderLine(string line)
 {
 	string key, value;
-	int i = 0;
+	size_t i = 0;
 	i = line.find(":");
 
 	key = line.substr(0, i);
