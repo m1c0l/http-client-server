@@ -1,6 +1,8 @@
 #ifndef HTTPMESSAGE_H
 #define HTTPMESSAGE_H
 
+#define CRLF "\r\n"
+
 #include <string>
 #include <unordered_map>
 

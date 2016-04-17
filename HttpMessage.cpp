@@ -50,7 +50,6 @@ string HttpMessage::getBody()
 }
 
 void HttpMessage::decode(string encoded) {
-	const string CRLF = "\r\n";
 	stringstream ss;
 	ss << encoded;
 	string line;
@@ -61,7 +60,7 @@ void HttpMessage::decode(string encoded) {
 	// header
 	while ((end = encoded.find(CRLF, start)) != string::npos) {
 		line = encoded.substr(start, end - start);
-		start = end + CRLF.size();
+		start = end + sizeof(CRLF);
 
 		if (line.size() == 0) // end of header
 			break;
@@ -86,9 +85,9 @@ string HttpMessage::encode() {
 	string msg = "";
 	msg += encodeFirstLine();
 	for (auto header : m_headers) {
-		msg += header.first + ": " + header.second + "\r\n";
+		msg += header.first + ": " + header.second + CRLF;
 	}
-	msg += "\r\n";
+	msg += CRLF;
 	msg += m_body;
 	return msg;
 }

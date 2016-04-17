@@ -31,5 +31,5 @@ void HttpRequest::decodeFirstLine(string line) {
 }
 
 string HttpRequest::encodeFirstLine() {
-	return m_method + " " + m_url + " " + getVersion() + "\r\n";
+	return m_method + " " + m_url + " " + getVersion() + CRLF;
 }

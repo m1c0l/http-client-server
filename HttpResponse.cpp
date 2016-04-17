@@ -30,5 +30,5 @@ void HttpResponse::setDescription(string description) {
 }
 
 string HttpResponse::encodeFirstLine() {
-	return getVersion() + " " + m_status + " " + m_statusDescription + "\r\n";
+	return getVersion() + " " + m_status + " " + m_statusDescription + CRLF;
 }
