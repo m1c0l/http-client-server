@@ -10,6 +10,12 @@
 #include <iostream>
 #include <sstream>
 
+#include "HttpMessage.h"
+#include "HttpResponse.h"
+#include "HttpRequest.h"
+
+const int  BUFFER_SIZE = 200;
+
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -70,31 +76,55 @@ int main(int argc, char **argv) {
 
 	// read/write data from/into the connection
 	bool isEnd = false;
-	char buf[20] = {0};
+	char buf[BUFFER_SIZE] = {0};
 	std::stringstream ss;
+	stringstream temp;
 
+	string httpTemp = "";
+	
+	int startInd =0;
+	//int endInd = BUFFER_SIZE-1;
+	
+	
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
 
-		if (recv(clientSockfd, buf, 20, 0) == -1) {
+		if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
 			perror("recv");
 			return 5;
 		}
-
-		ss << buf << std::endl;
+		
+		
+		if (temp.str() == "close\n")
+		  break;
+		//ss << buf << std::endl;
 		std::cout << buf << std::endl;
+		int x;
 
-
-		if (send(clientSockfd, buf, 20, 0) == -1) {
+		temp << buf << endl;
+		httpTemp += buff;
+		if((x = httpTemp.find(CLRF, startInd)) != -1)
+		  {startInd += BUFFER_SIZE;}
+		else
+		  {
+		    httpTemp.resize(x+5); 
+		    /*  if (send(clientSockfd, httpTemp,httpTemp.size(), 0) == -1) {
 			perror("send");
 			return 6;
+			}*/
+		  }
+
+		/*
+		if (temp.str() == "close\n"){
+		 std::cout << "BREAK" << std::endl;
+		  isEnd = true;
+		  break;
 		}
-
-		if (ss.str() == "close\n")
-			break;
-
-		ss.str("");
+		*/
+		temp.str("");
 	}
+
+	std::cout << httpTemp <<endl;
 
 	close(clientSockfd);
 
