@@ -8,7 +8,6 @@ using namespace std;
 
 class HttpMessage {
 public:
-	virtual void decodeFirstLine(string line) = 0;
 	string getVersion();
 	void setVersion(string ver);
 	void setHeader(string key, string value);
@@ -16,6 +15,9 @@ public:
 	void decodeHeaderLine(string line);
 	void setPayLoad(string blob);
 	string getPayload();
+	virtual void decodeFirstLine(string line) = 0;
+	virtual string encodeFirstLine() = 0;
+	string encode();
 
 private:
 	string m_version;

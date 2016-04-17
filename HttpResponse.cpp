@@ -6,21 +6,18 @@ void HttpResponse::decodeFirstLine(string line) {
 	stringstream ss;
 	ss << line;
 
-	string version;
-	HttpStatus status;
-	string description;
+	string version, status, description;
 	ss >> version >> status >> description;
-
 	setVersion(version);
 	setStatus(status);
 	setDescription(description);
 }
 
-HttpStatus HttpResponse::getStatus() {
+string HttpResponse::getStatus() {
 	return m_status;
 }
 
-void HttpResponse::setStatus(HttpStatus status) {
+void HttpResponse::setStatus(string status) {
 	m_status = status;
 }
 
@@ -30,4 +27,8 @@ string HttpResponse::getDescription() {
 
 void HttpResponse::setDescription(string description) {
 	m_statusDescription = description;
+}
+
+string HttpResponse::encodeFirstLine() {
+	return getVersion() + " " + m_status + " " + m_statusDescription + "\r\n";
 }

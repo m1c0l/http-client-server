@@ -28,3 +28,6 @@ void HttpRequest::decodeFirstLine(string line) {
 	setVersion(version);
 }
 
+string HttpRequest::encodeFirstLine() {
+	return m_method + " " +  m_url + " " + getVersion() + "\r\n";
+}

@@ -55,3 +55,14 @@ string HttpMessage::getPayload()
 {
   return m_payload;
 }
+
+string HttpMessage::encode() {
+	string msg = "";
+	msg += encodeFirstLine();
+	for (auto header : m_headers) {
+		msg += header.first + ": " + header.second + "\r\n";
+	}
+	msg += "\r\n";
+	msg += m_payload;
+	return msg;
+}

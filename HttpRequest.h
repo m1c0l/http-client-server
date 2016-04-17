@@ -14,6 +14,7 @@ public:
 	string getUrl();
 	void setUrl(string url);
 	void decodeFirstLine(string line);
+	string encodeFirstLine();
 };
 
 #endif
