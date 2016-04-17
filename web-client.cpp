@@ -18,7 +18,41 @@ int main(int argc, char **argv) {
 		cerr << "Usage: ./webclient [URL]\n";	
 		return 1;
 	}
+
+	// process URL
 	string urlStr = argv[1];
+	if (urlStr.substr(0, 7) == "http://") {
+		// remove http:// at start of URL
+		urlStr = urlStr.substr(7);
+	}
+
+	size_t colonPos = urlStr.find_first_of(":");
+	size_t slashPos = urlStr.find_first_of("/");
+
+	string hostname = urlStr; 
+	if (colonPos != string::npos) {
+		hostname = urlStr.substr(0, colonPos);
+	}
+	else if (slashPos != string::npos) {
+		hostname = urlStr.substr(0, slashPos);
+	}
+
+	string port = "4000"; 
+	if (colonPos != string::npos && slashPos != string::npos) {
+		cout << "Valid colon and slash\n";
+		port = urlStr.substr(colonPos + 1, slashPos - colonPos - 1);
+	}
+	else if (colonPos != string::npos) {
+		cout << "Only valid colon\n";
+		port = urlStr.substr(colonPos + 1);
+	}
+
+	string filename = "";
+	if (slashPos != string::npos) {
+		filename = urlStr.substr(slashPos + 1);
+	}
+
+	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";	
 	
 	struct addrinfo hints;
 	struct addrinfo* res;
@@ -30,7 +64,7 @@ int main(int argc, char **argv) {
 
 	// get address
 	int status = 0;
-	if ((status = getaddrinfo(argv[1], "80", &hints, &res)) != 0) {
+	if ((status = getaddrinfo(hostname.c_str(), "80", &hints, &res)) != 0) {
 		cerr << "getaddrinfo: " << gai_strerror(status) << '\n'; 
 		return 2;
 	}
@@ -53,7 +87,7 @@ int main(int argc, char **argv) {
 
 	struct sockaddr_in serverAddr;
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(40000);     // short, network byte order
+	serverAddr.sin_port = htons(stoi(port));     // short, network byte order
 	serverAddr.sin_addr.s_addr = inet_addr(ipstr);
 	memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
