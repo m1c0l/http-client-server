@@ -7,10 +7,10 @@ CLASSES = HttpMessage HttpRequest HttpResponse
 
 all: web-server web-client
 
-web-server: $(CLASSES:=.cpp) web-server.cpp
+web-server: $(CLASSES:=.cpp) $(CLASSES:=.h) web-server.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-web-client: $(CLASSES:=.cpp) web-client.cpp
+web-client: $(CLASSES:=.cpp) $(CLASSES:=.h) web-client.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 
