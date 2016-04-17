@@ -1,67 +1,52 @@
-#include "HttpMessage.h"
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <map>
+#include <unordered_map>
+#include "HttpMessage.h"
 
 using namespace std;
 
-string HttpMessage::getVersion(){
-  return m_version;
+void HttpMessage::setVersion(string ver){
+	m_version = ver;
 }
 
-void HttpMessage::setVersion(string ver){
-  m_version = ver;
+string HttpMessage::getVersion(){
+	return m_version;
 }
 
 void HttpMessage::setHeader(string key, string value)
 {
-  m_headers[key] = value;
-  return;
+	m_headers[key] = value;
 }
 
 string HttpMessage::getHeader(string key)
 {
-  return m_headers[key];
+	return m_headers[key];
 }
 
 void HttpMessage::decodeHeaderLine(string line)
-//May need error checking if header line does not end with carriage return
 {
-  string key, value;
-  int i = 0;
-  i = line.find(":");
+	string key, value;
+	int i = 0;
+	i = line.find(":");
 
-  key = line.substr(0, i);
-  i++;
-  while(line[i] == ' ')
-    i++;
-  value = line.substr(i, line.size());
+	key = line.substr(0, i);
+	i++;
+	while(line[i] == ' ')
+		i++;
+	value = line.substr(i, line.size());
 
-  setHeader(key, value);
-  return;
+	setHeader(key, value);
 }
 
-void HttpMessage::setPayLoad(string blob)
+void HttpMessage::setBody(string body)
 {
-  m_payload = blob;
-  return;
+	m_body = body;
 }
 
-string HttpMessage::getPayload()
+string HttpMessage::getBody()
 {
-  return m_payload;
-}
-
-string HttpMessage::encode() {
-	string msg = "";
-	msg += encodeFirstLine();
-	for (auto header : m_headers) {
-		msg += header.first + ": " + header.second + "\r\n";
-	}
-	msg += "\r\n";
-	msg += m_payload;
-	return msg;
+	return m_body;
 }
 
 void HttpMessage::decode(string encoded) {
@@ -92,7 +77,18 @@ void HttpMessage::decode(string encoded) {
 	// body
 	string length = getHeader("Content-Length");
 	if (length.size() != 0 && stoi(length) != 0) {
-		string blob = encoded.substr(start, stoi(length));
-		setPayLoad(blob);
+		string body = encoded.substr(start, stoi(length));
+		setBody(body);
 	}
+}
+
+string HttpMessage::encode() {
+	string msg = "";
+	msg += encodeFirstLine();
+	for (auto header : m_headers) {
+		msg += header.first + ": " + header.second + "\r\n";
+	}
+	msg += "\r\n";
+	msg += m_body;
+	return msg;
 }
