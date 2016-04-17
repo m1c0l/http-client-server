@@ -13,6 +13,8 @@
 
 #include "HttpRequest.h"
 
+const int BUFFER_SIZE = 200;
+
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -107,7 +109,7 @@ int main(int argc, char **argv) {
 	// send/receive data to/from connection
 	bool isEnd = false;
 	string input;
-	char buf[20] = {0};
+	char buf[BUFFER_SIZE] = {0};
 	stringstream ss;
 
 	HttpRequest req;
@@ -117,27 +119,24 @@ int main(int argc, char **argv) {
 	req.setHeader("Host", hostname);
 	string msg = req.encode();
 
+	if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
+		perror("send");
+		return 4;
+	}
+
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
-
-		cout << "send: ";
-		cin >> input;
-		if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
-			perror("send");
-			return 4;
-		}
-
-
-		if (recv(sockfd, buf, 20, 0) == -1) {
+		
+		int recv_status = 0;
+		if ((recv_status = recv(sockfd, buf, BUFFER_SIZE, 0)) == -1) {
 			perror("recv");
 			return 5;
 		}
-		ss << buf << '\n';
-		cout << "echo: ";
-		cout << buf << '\n';
-
-		if (ss.str() == "close\n")
-			isEnd = true;
+		else if (!recv_status) {
+			break;
+		}
+		ss << buf;
+		cout << buf; 
 
 		ss.str("");
 	}
