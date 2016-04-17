@@ -7,8 +7,13 @@ void HttpResponse::decodeFirstLine(string line) {
 	ss << line;
 
 	string version;
-	ss >> version >> m_status >> m_statusDescription;
+	HttpStatus status;
+	string description;
+	ss >> version >> status >> description;
+
 	setVersion(version);
+	setStatus(status);
+	setDescription(description);
 }
 
 HttpStatus HttpResponse::getStatus() {
