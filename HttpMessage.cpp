@@ -1,68 +1,93 @@
-#include "HttpMessage.h"
 #include <string>
 #include <iostream>
-#include <map>
+#include <sstream>
+#include <unordered_map>
+#include "HttpMessage.h"
 
 using namespace std;
 
-string HttpMessage::getVersion(){
-  return m_version;
+void HttpMessage::setVersion(string ver){
+	m_version = ver;
 }
 
-void HttpMessage::setVersion(string ver){
-  m_version = ver;
+string HttpMessage::getVersion(){
+	return m_version;
 }
 
 void HttpMessage::setHeader(string key, string value)
 {
-  m_headers[key] = value;
-  return;
+	m_headers[key] = value;
 }
 
 string HttpMessage::getHeader(string key)
 {
-  return m_headers[key];
+	return m_headers[key];
 }
 
 void HttpMessage::decodeHeaderLine(string line)
-//May need error checking if header line does not end with carriage return
 {
-  string key, value;
-  int i=0;
-  while(line[i]!= ':')
-    {
-      key += line[i];
-      i++;
-    }
-  i++;
-  while(line[i] == ' ')
-    i++;
-  while(line[i] != '\r' && line[i+1] != '\n')
-    {
-      value += line[i];
-    }
-  setHeader(key, value);
-  return;
+	string key, value;
+	size_t i = 0;
+	i = line.find(":");
+
+	key = line.substr(0, i);
+	i++;
+	while(line[i] == ' ')
+		i++;
+	value = line.substr(i, line.size());
+
+	setHeader(key, value);
 }
 
-void HttpMessage::setPayLoad(string blob)
+void HttpMessage::setBody(string body)
 {
-  m_payload = blob;
-  return;
+	m_body = body;
 }
 
-string HttpMessage::getPayload()
+string HttpMessage::getBody()
 {
-  return m_payload;
+	return m_body;
+}
+
+void HttpMessage::decode(string encoded) {
+	stringstream ss;
+	ss << encoded;
+	string line;
+
+	size_t start = 0, end = 0;
+	bool firstLine = true;
+
+	// header
+	while ((end = encoded.find(CRLF, start)) != string::npos) {
+		line = encoded.substr(start, end - start);
+		start = end + sizeof(CRLF);
+
+		if (line.size() == 0) // end of header
+			break;
+
+		if (firstLine)
+			decodeFirstLine(line);
+		else
+			decodeHeaderLine(line);
+
+		firstLine = false;
+	}
+
+	// body
+	string length = getHeader("Content-Length");
+	if (length.size() != 0 && stoi(length) != 0) {
+		string body = encoded.substr(start, stoi(length));
+		setBody(body);
+	}
 }
 
 string HttpMessage::encode() {
 	string msg = "";
 	msg += encodeFirstLine();
 	for (auto header : m_headers) {
-		msg += header.first + ": " + header.second + "\r\n";
+		msg += header.first + ": " + header.second + CRLF;
 	}
-	msg += "\r\n";
-	msg += m_payload;
+	msg += CRLF;
+	msg += m_body;
 	return msg;
 }

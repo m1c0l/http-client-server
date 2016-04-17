@@ -1,21 +1,23 @@
+#include <string>
+#include <sstream>
 #include "HttpRequest.h"
 
-#include <sstream>
-
-string HttpRequest::getMethod() {
-	return m_method;
-}
+using namespace std;
 
 void HttpRequest::setMethod(string method) {
 	m_method = method;
 }
 
-string HttpRequest::getUrl() {
-	return m_url;
+string HttpRequest::getMethod() {
+	return m_method;
 }
 
 void HttpRequest::setUrl(string url) {
 	m_url = url;
+}
+
+string HttpRequest::getUrl() {
+	return m_url;
 }
 
 void HttpRequest::decodeFirstLine(string line) {
@@ -29,5 +31,5 @@ void HttpRequest::decodeFirstLine(string line) {
 }
 
 string HttpRequest::encodeFirstLine() {
-	return m_method + " " +  m_url + " " + getVersion() + "\r\n";
+	return m_method + " " + m_url + " " + getVersion() + CRLF;
 }

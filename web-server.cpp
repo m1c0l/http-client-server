@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 	// bind address to socket
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(40000);     // short, network byte order
+	addr.sin_port = htons(stoi(port));     // short, network byte order
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
 
@@ -102,8 +102,8 @@ int main(int argc, char **argv) {
 		int x;
 
 		temp << buf << endl;
-		httpTemp += buff;
-		if((x = httpTemp.find(CLRF, startInd)) != -1)
+		httpTemp += buf;
+		if((x = httpTemp.find(CRLF, startInd)) != -1)
 		  {startInd += BUFFER_SIZE;}
 		else
 		  {

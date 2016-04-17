@@ -1,5 +1,5 @@
 CXX=g++
-CXXOPTIMIZE= -O2
+CXXOPTIMIZE= -g
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
 USERID=EDIT_MAKE_FILE
 
@@ -13,6 +13,7 @@ web-server: $(CLASSES:=.cpp) web-server.cpp
 web-client: $(CLASSES:=.cpp) web-client.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(CLASSES:=.cpp): $(CLASSES:=.h)
 
 clean:
 	rm -rf *.o *~ *.gch *.swp *.dSYM web-server web-client *.tar.gz

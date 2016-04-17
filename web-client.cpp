@@ -11,6 +11,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "HttpRequest.h"
+
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -18,7 +20,41 @@ int main(int argc, char **argv) {
 		cerr << "Usage: ./webclient [URL]\n";	
 		return 1;
 	}
+
+	// process URL
 	string urlStr = argv[1];
+	if (urlStr.substr(0, 7) == "http://") {
+		// remove http:// at start of URL
+		urlStr = urlStr.substr(7);
+	}
+
+	size_t colonPos = urlStr.find_first_of(":");
+	size_t slashPos = urlStr.find_first_of("/");
+
+	string hostname = urlStr; 
+	if (colonPos != string::npos) {
+		hostname = urlStr.substr(0, colonPos);
+	}
+	else if (slashPos != string::npos) {
+		hostname = urlStr.substr(0, slashPos);
+	}
+
+	string port = "4000"; 
+	if (colonPos != string::npos && slashPos != string::npos) {
+		cout << "Valid colon and slash\n";
+		port = urlStr.substr(colonPos + 1, slashPos - colonPos - 1);
+	}
+	else if (colonPos != string::npos) {
+		cout << "Only valid colon\n";
+		port = urlStr.substr(colonPos + 1);
+	}
+
+	string filename = "";
+	if (slashPos != string::npos) {
+		filename = urlStr.substr(slashPos + 1);
+	}
+
+	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";	
 	
 	struct addrinfo hints;
 	struct addrinfo* res;
@@ -30,40 +66,30 @@ int main(int argc, char **argv) {
 
 	// get address
 	int status = 0;
-	if ((status = getaddrinfo(argv[1], "80", &hints, &res)) != 0) {
-		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+	if ((status = getaddrinfo(hostname.c_str(), "80", &hints, &res)) != 0) {
+		cerr << "getaddrinfo: " << gai_strerror(status) << '\n'; 
 		return 2;
 	}
 
-	std::cout << "IP addresses for " << argv[1] << ": " << std::endl;
+	cout << "IP addresses for " << argv[1] << ": " << '\n';
 	struct addrinfo* p = res;
-    // convert address to IPv4 address
-    struct sockaddr_in* ipv4;
+	// convert address to IPv4 address
+	struct sockaddr_in* ipv4;
 	char ipstr[INET_ADDRSTRLEN] = {'\0'};
 	if (p != 0) {
 		ipv4 = (struct sockaddr_in*)p->ai_addr;
 
-    	// convert the IP to a string and print it:
-       	inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
-    	cout << "  " << ipstr << "\n";
+		// convert the IP to a string and print it:
+		inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
+		cout << "  " << ipstr << "\n";
 	}
 
 	// create a socket using TCP IP
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-	// struct sockaddr_in addr;
-	// addr.sin_family = AF_INET;
-	// addr.sin_port = htons(40001);     // short, network byte order
-	// addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	// memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
-	// if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-	//   perror("bind");
-	//   return 1;
-	// }
-
 	struct sockaddr_in serverAddr;
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(40000);     // short, network byte order
+	serverAddr.sin_port = htons(stoi(port));     // short, network byte order
 	serverAddr.sin_addr.s_addr = inet_addr(ipstr);
 	memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
@@ -80,24 +106,25 @@ int main(int argc, char **argv) {
 		return 3;
 	}
 
-	//char ipstr[INET_ADDRSTRLEN] = {'\0'};
-	//inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
-	//std::cout << "Set up a connection from: " << ipstr << ":" <<
-	//	ntohs(clientAddr.sin_port) << std::endl;
-
-
 	// send/receive data to/from connection
 	bool isEnd = false;
-	std::string input;
+	string input;
 	char buf[20] = {0};
-	std::stringstream ss;
+	stringstream ss;
+
+	HttpRequest req;
+	req.setMethod("GET");
+	req.setUrl("/classes/spring16/cs118/index.html");
+	req.setVersion("HTTP/1.1");
+	req.setHeader("Host", "web.cs.ucla.edu");
+	string msg = req.encode();
 
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
 
-		std::cout << "send: ";
-		std::cin >> input;
-		if (send(sockfd, input.c_str(), input.size(), 0) == -1) {
+		cout << "send: ";
+		cin >> input;
+		if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
 			perror("send");
 			return 4;
 		}
@@ -107,12 +134,12 @@ int main(int argc, char **argv) {
 			perror("recv");
 			return 5;
 		}
-		ss << buf << std::endl;
-		std::cout << "echo: ";
-		std::cout << buf << std::endl;
+		ss << buf << '\n';
+		cout << "echo: ";
+		cout << buf << '\n';
 
 		if (ss.str() == "close\n")
-			break;
+			isEnd = true;
 
 		ss.str("");
 	}
