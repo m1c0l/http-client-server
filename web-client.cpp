@@ -39,19 +39,17 @@ int main(int argc, char **argv) {
 		hostname = urlStr.substr(0, slashPos);
 	}
 
-	string port = "4000"; 
+	string port = "80"; 
 	if (colonPos != string::npos && slashPos != string::npos) {
-		cout << "Valid colon and slash\n";
 		port = urlStr.substr(colonPos + 1, slashPos - colonPos - 1);
 	}
 	else if (colonPos != string::npos) {
-		cout << "Only valid colon\n";
 		port = urlStr.substr(colonPos + 1);
 	}
 
-	string filename = "";
+	string filename = "/";
 	if (slashPos != string::npos) {
-		filename = urlStr.substr(slashPos + 1);
+		filename = urlStr.substr(slashPos);
 	}
 
 	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";	
@@ -114,9 +112,9 @@ int main(int argc, char **argv) {
 
 	HttpRequest req;
 	req.setMethod("GET");
-	req.setUrl("/classes/spring16/cs118/index.html");
-	req.setVersion("HTTP/1.1");
-	req.setHeader("Host", "web.cs.ucla.edu");
+	req.setUrl(filename);
+	req.setVersion("HTTP/1.0");
+	req.setHeader("Host", hostname);
 	string msg = req.encode();
 
 	while (!isEnd) {
