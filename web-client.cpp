@@ -11,6 +11,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "HttpRequest.h"
+
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -110,12 +112,19 @@ int main(int argc, char **argv) {
 	char buf[20] = {0};
 	stringstream ss;
 
+	HttpRequest req;
+	req.setMethod("GET");
+	req.setUrl("/classes/spring16/cs118/index.html");
+	req.setVersion("HTTP/1.1");
+	req.setHeader("Host", "web.cs.ucla.edu");
+	string msg = req.encode();
+
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
 
 		cout << "send: ";
 		cin >> input;
-		if (send(sockfd, input.c_str(), input.size(), 0) == -1) {
+		if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
 			perror("send");
 			return 4;
 		}
