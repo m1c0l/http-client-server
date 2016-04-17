@@ -1,6 +1,7 @@
 #include "HttpMessage.h"
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <map>
 
 using namespace std;
@@ -28,19 +29,15 @@ void HttpMessage::decodeHeaderLine(string line)
 //May need error checking if header line does not end with carriage return
 {
   string key, value;
-  int i=0;
-  while(line[i]!= ':')
-    {
-      key += line[i];
-      i++;
-    }
+  int i = 0;
+  i = line.find(":");
+
+  key = line.substr(0, i);
   i++;
   while(line[i] == ' ')
     i++;
-  while(line[i] != '\r' && line[i+1] != '\n')
-    {
-      value += line[i];
-    }
+  value = line.substr(i, line.size());
+
   setHeader(key, value);
   return;
 }
@@ -65,4 +62,37 @@ string HttpMessage::encode() {
 	msg += "\r\n";
 	msg += m_payload;
 	return msg;
+}
+
+void HttpMessage::decode(string encoded) {
+	const string CRLF = "\r\n";
+	stringstream ss;
+	ss << encoded;
+	string line;
+
+	size_t start = 0, end = 0;
+	bool firstLine = true;
+
+	// header
+	while ((end = encoded.find(CRLF, start)) != string::npos) {
+		line = encoded.substr(start, end - start);
+		start = end + CRLF.size();
+
+		if (line.size() == 0) // end of header
+			break;
+
+		if (firstLine)
+			decodeFirstLine(line);
+		else
+			decodeHeaderLine(line);
+
+		firstLine = false;
+	}
+
+	// body
+	string length = getHeader("Content-Length");
+	if (length.size() != 0 && stoi(length) != 0) {
+		string blob = encoded.substr(start, stoi(length));
+		setPayLoad(blob);
+	}
 }

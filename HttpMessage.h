@@ -18,6 +18,7 @@ public:
 	virtual void decodeFirstLine(string line) = 0;
 	virtual string encodeFirstLine() = 0;
 	string encode();
+	void decode(string encoded);
 
 private:
 	string m_version;
