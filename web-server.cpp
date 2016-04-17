@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 		}
 
 		if (ss.str() == "close\n")
-			break;
+			isEnd = true;
 
 		ss.str("");
 	}

@@ -31,35 +31,25 @@ int main(int argc, char **argv) {
 	// get address
 	int status = 0;
 	if ((status = getaddrinfo(argv[1], "80", &hints, &res)) != 0) {
-		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+		cerr << "getaddrinfo: " << gai_strerror(status) << '\n'; 
 		return 2;
 	}
 
-	std::cout << "IP addresses for " << argv[1] << ": " << std::endl;
+	cout << "IP addresses for " << argv[1] << ": " << '\n';
 	struct addrinfo* p = res;
-    // convert address to IPv4 address
-    struct sockaddr_in* ipv4;
+	// convert address to IPv4 address
+	struct sockaddr_in* ipv4;
 	char ipstr[INET_ADDRSTRLEN] = {'\0'};
 	if (p != 0) {
 		ipv4 = (struct sockaddr_in*)p->ai_addr;
 
-    	// convert the IP to a string and print it:
-       	inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
-    	cout << "  " << ipstr << "\n";
+		// convert the IP to a string and print it:
+		inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
+		cout << "  " << ipstr << "\n";
 	}
 
 	// create a socket using TCP IP
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	// struct sockaddr_in addr;
-	// addr.sin_family = AF_INET;
-	// addr.sin_port = htons(40001);     // short, network byte order
-	// addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	// memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
-	// if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-	//   perror("bind");
-	//   return 1;
-	// }
 
 	struct sockaddr_in serverAddr;
 	serverAddr.sin_family = AF_INET;
@@ -80,23 +70,17 @@ int main(int argc, char **argv) {
 		return 3;
 	}
 
-	//char ipstr[INET_ADDRSTRLEN] = {'\0'};
-	//inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
-	//std::cout << "Set up a connection from: " << ipstr << ":" <<
-	//	ntohs(clientAddr.sin_port) << std::endl;
-
-
 	// send/receive data to/from connection
 	bool isEnd = false;
-	std::string input;
+	string input;
 	char buf[20] = {0};
-	std::stringstream ss;
+	stringstream ss;
 
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
 
-		std::cout << "send: ";
-		std::cin >> input;
+		cout << "send: ";
+		cin >> input;
 		if (send(sockfd, input.c_str(), input.size(), 0) == -1) {
 			perror("send");
 			return 4;
@@ -107,12 +91,12 @@ int main(int argc, char **argv) {
 			perror("recv");
 			return 5;
 		}
-		ss << buf << std::endl;
-		std::cout << "echo: ";
-		std::cout << buf << std::endl;
+		ss << buf << '\n';
+		cout << "echo: ";
+		cout << buf << '\n';
 
 		if (ss.str() == "close\n")
-			break;
+			isEnd = true;
 
 		ss.str("");
 	}
