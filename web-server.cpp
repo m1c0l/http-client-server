@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
-
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 	
 	int startInd =0;
 	//int endInd = BUFFER_SIZE-1;
-	
+	HttpRequest message;
 	
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
@@ -99,6 +99,7 @@ int main(int argc, char **argv) {
 		  break;
 		//ss << buf << std::endl;
 		std::cout << buf << std::endl;
+				
 		int x;
 
 		temp << buf << endl;
@@ -107,7 +108,10 @@ int main(int argc, char **argv) {
 		  {startInd += BUFFER_SIZE;}
 		else
 		  {
-		    httpTemp.resize(x+5); 
+		    httpTemp.resize(x+5); //httpTemp is string of Http message, maybe change to stringstream later? 
+		    message.decode(httpTemp);
+		    break;
+
 		    /*  if (send(clientSockfd, httpTemp,httpTemp.size(), 0) == -1) {
 			perror("send");
 			return 6;
@@ -123,9 +127,29 @@ int main(int argc, char **argv) {
 		*/
 		temp.str("");
 	}
+	
+	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
+	  //std::cout << httpTemp <<endl;
+	fstream wantedFile;
+	wantedFile.open(url+filedir); //find the http requested file in the file directory
+	if(!wantedFile)
+	  {
+	    cerr << "Open Failure\n";
+	    return -1;//TODO: Need to return 404 as httpresponse
+	  }
+	string fileBody, holder;
+	while(getline(wantedFile,holder))
+	  fileBody+=(holder+'\n'); 
+	
+	HttpResponse response;
+	response.setBody(fileBody);
+	response.setVersion("HTTP/1.0");
+	response.setStatus("200"); // or other error cases
 
-	std::cout << httpTemp <<endl;
-
+	//Workaround
+     
+	
+	response.setHeader("Content-Length", to_string(fileBody.size()));
 	close(clientSockfd);
 
 	return 0;
