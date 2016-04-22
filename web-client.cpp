@@ -9,9 +9,9 @@
 #include <netdb.h>
 
 #include <iostream>
-#include <sstream>
 
 #include "HttpRequest.h"
+#include "HttpResponse.h"
 
 const int BUFFER_SIZE = 200;
 
@@ -110,7 +110,6 @@ int main(int argc, char **argv) {
 	bool isEnd = false;
 	string input;
 	char buf[BUFFER_SIZE] = {0};
-	stringstream ss;
 
 	HttpRequest req;
 	req.setMethod("GET");
@@ -124,6 +123,7 @@ int main(int argc, char **argv) {
 		return 4;
 	}
 
+	string responseBuf;
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
 		
@@ -135,13 +135,14 @@ int main(int argc, char **argv) {
 		else if (!recv_status) {
 			break;
 		}
-		ss << buf;
-		cout << buf; 
-
-		ss.str("");
+		responseBuf += buf;
 	}
-
 	close(sockfd);
+
+	HttpResponse resp;
+	resp.decode(responseBuf);
+	cout << resp.getBody();
+
 
 	return 0;
 }
