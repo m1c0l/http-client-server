@@ -7,15 +7,17 @@
 #include <errno.h>
 #include <unistd.h>
 #include <netdb.h>
-
+#include <libgen.h>
 #include <iostream>
+#include <fstream>
 
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 
-const int BUFFER_SIZE = 200;
-
 using namespace std;
+
+
+const int BUFFER_SIZE = 200;
 
 int main(int argc, char **argv) {
 	if (argc != 2) {
@@ -139,9 +141,19 @@ int main(int argc, char **argv) {
 	}
 	close(sockfd);
 
+	// decode response
 	HttpResponse resp;
 	resp.decode(responseBuf);
-	cout << resp.getBody();
+
+	// save retrieved file
+	ofstream of;
+	string base = basename((char*)filename.c_str());
+	if (filename == "/") {
+		base = "index.html";
+	}
+	of.open(base);
+	of << resp.getBody();
+	of.close();
 
 
 	return 0;
