@@ -60,7 +60,7 @@ void HttpMessage::decode(string encoded) {
 	// header
 	while ((end = encoded.find(CRLF, start)) != string::npos) {
 		line = encoded.substr(start, end - start);
-		start = end + sizeof(CRLF);
+		start = end + sizeof(CRLF) - 1;
 
 		if (line.size() == 0) // end of header
 			break;
