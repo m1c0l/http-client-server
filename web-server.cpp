@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include "HttpMessage.h"
 #include "HttpResponse.h"
@@ -18,14 +19,15 @@ const int  BUFFER_SIZE = 200;
 
 using namespace std;
 
-int join() {
+void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
+  
+  //        socklen_t clientAddrSize = sizeof(clientAddr);
 	char ipstr[INET_ADDRSTRLEN] = {'\0'};
 	inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
 	std::cout << "Accept a connection from: " << ipstr << ":" <<
 		ntohs(clientAddr.sin_port) << std::endl;
 
 	// read/write data from/into the connection
-	bool isEnd = false;
 	char buf[BUFFER_SIZE] = {0};
 	std::stringstream ss;
 	stringstream temp;
@@ -37,12 +39,12 @@ int join() {
 	HttpRequest message;
 	string errorStatus = "200";
 	
-	while (!isEnd) {
+	while (true) {
 		memset(buf, '\0', sizeof(buf));
 
 		if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
 			perror("recv");
-			return 5;
+			return;
 		}
 		
 		
@@ -165,17 +167,19 @@ int main(int argc, char **argv) {
 
 	// accept a new connection
 	struct sockaddr_in clientAddr;
-	socklen_t clientAddrSize = sizeof(clientAddr);
-	int clientSockfd;
 	
+	int clientSockfd;
+
+	socklen_t clientAddrSize = sizeof(clientAddr);	
 	//Start Multithreading Magic
-	while( clientSockfd= accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize)){
+	while( (clientSockfd= accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize))){
 
-	if (clientSockfd == -1) {
-		perror("accept");
-		return 4;
+	  if (clientSockfd == -1) {
+	    perror("accept");
+	    return 4;
 	}
-
+	  thread{thread_func, clientAddr, filedir, clientSockfd}.detach();
+	  
 	}
 
 	
