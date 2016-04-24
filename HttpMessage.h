@@ -19,7 +19,7 @@ public:
 	void setBody(string body);
 	string getBody();
 
-	void decode(string encoded);
+	int decode(string encoded);
 	string encode();
 
 private:
@@ -27,9 +27,9 @@ private:
 	unordered_map<string, string> m_headers;
 	string m_body;
 
-	virtual void decodeFirstLine(string line) = 0;
+	virtual int decodeFirstLine(string line) = 0;
 	virtual string encodeFirstLine() = 0;
-	void decodeHeaderLine(string line);
+	int decodeHeaderLine(string line);
 };
 
 #endif

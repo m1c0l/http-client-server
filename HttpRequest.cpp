@@ -20,7 +20,7 @@ string HttpRequest::getUrl() {
 	return m_url;
 }
 
-void HttpRequest::decodeFirstLine(string line) {
+int HttpRequest::decodeFirstLine(string line) {
 	stringstream ss;
 	ss << line;
 	string method, url, version;
@@ -28,6 +28,7 @@ void HttpRequest::decodeFirstLine(string line) {
 	setMethod(method);
 	setUrl(url);
 	setVersion(version);
+	return 0;
 }
 
 string HttpRequest::encodeFirstLine() {

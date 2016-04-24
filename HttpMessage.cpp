@@ -24,11 +24,15 @@ string HttpMessage::getHeader(string key)
 	return m_headers[key];
 }
 
-void HttpMessage::decodeHeaderLine(string line)
+int HttpMessage::decodeHeaderLine(string line)
 {
 	string key, value;
 	size_t i = 0;
 	i = line.find(":");
+
+	if (i == string::npos) {
+		return 400;
+	}
 
 	key = line.substr(0, i);
 	i++;
@@ -37,6 +41,7 @@ void HttpMessage::decodeHeaderLine(string line)
 	value = line.substr(i, line.size());
 
 	setHeader(key, value);
+	return 0;
 }
 
 void HttpMessage::setBody(string body)
@@ -49,7 +54,7 @@ string HttpMessage::getBody()
 	return m_body;
 }
 
-void HttpMessage::decode(string encoded) {
+int HttpMessage::decode(string encoded) {
 	stringstream ss;
 	ss << encoded;
 	string line;
@@ -65,10 +70,16 @@ void HttpMessage::decode(string encoded) {
 		if (line.size() == 0) // end of header
 			break;
 
-		if (firstLine)
-			decodeFirstLine(line);
-		else
-			decodeHeaderLine(line);
+		if (firstLine) {
+			if (decodeFirstLine(line) == 400) {
+				return 400;
+			}
+		}
+		else {
+			if (decodeHeaderLine(line) == 400) {
+				return 400;
+			}
+		}
 
 		firstLine = false;
 	}
@@ -79,6 +90,7 @@ void HttpMessage::decode(string encoded) {
 		string body = encoded.substr(start, stoi(length));
 		setBody(body);
 	}
+	return 0;
 }
 
 string HttpMessage::encode() {

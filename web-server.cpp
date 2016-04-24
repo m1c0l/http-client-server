@@ -85,6 +85,7 @@ int main(int argc, char **argv) {
 	int startInd =0;
 	//int endInd = BUFFER_SIZE-1;
 	HttpRequest message;
+	string errorStatus = "200";
 	
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
@@ -111,7 +112,9 @@ int main(int argc, char **argv) {
 		else
 		  {
 		    httpTemp.resize(x+5); //httpTemp is string of Http message, maybe change to stringstream later? 
-		    message.decode(httpTemp);
+		    if (message.decode(httpTemp) == 400) {
+		    	errorStatus = "400";
+		    }
 		    break;
 
 		    /*  if (send(clientSockfd, httpTemp,httpTemp.size(), 0) == -1) {
@@ -132,7 +135,7 @@ int main(int argc, char **argv) {
 	
 	//cout << httpTemp << endl;
 	//*
-	string errorStatus = "200";
+	
 	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
 	
 	fstream wantedFile;

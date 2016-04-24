@@ -2,7 +2,7 @@
 #include "HttpResponse.h"
 using namespace std;
 
-void HttpResponse::decodeFirstLine(string line) {
+int HttpResponse::decodeFirstLine(string line) {
 	stringstream ss;
 	ss << line;
 
@@ -14,6 +14,7 @@ void HttpResponse::decodeFirstLine(string line) {
 	setVersion(version);
 	setStatus(status);
 	setDescription(description);
+	return 0;
 }
 
 string HttpResponse::getStatus() {
