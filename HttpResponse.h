@@ -14,12 +14,12 @@ public:
 	void setDescription(string description);
 	string getDescription();
 
-	virtual void decodeFirstLine(string line);
-	virtual string encodeFirstLine();
-
 private:
 	string m_status;
 	string m_statusDescription;
+
+	virtual void decodeFirstLine(string line);
+	virtual string encodeFirstLine();
 };
 
 #endif

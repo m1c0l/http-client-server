@@ -14,12 +14,12 @@ public:
 	void setUrl(string url);
 	string getUrl();
 
-	virtual void decodeFirstLine(string line);
-	virtual string encodeFirstLine();
-
 private:
 	string m_url;
 	string m_method;
+
+	virtual void decodeFirstLine(string line);
+	virtual string encodeFirstLine();
 };
 
 #endif
