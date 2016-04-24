@@ -98,13 +98,15 @@ int main(int argc, char **argv) {
 		if (temp.str() == "close\n")
 		  break;
 		//ss << buf << std::endl;
-		std::cout << buf << std::endl;
+		//std::cout << buf << std::endl;
 				
 		int x;
 
 		temp << buf << endl;
 		httpTemp += buf;
-		if((x = httpTemp.find(CRLF, startInd)) != -1)
+		//cout << httpTemp << endl;
+		x = httpTemp.find(CRLF, startInd);
+		if(x == -1)
 		  {startInd += BUFFER_SIZE;}
 		else
 		  {
@@ -128,28 +130,42 @@ int main(int argc, char **argv) {
 		temp.str("");
 	}
 	
+	//cout << httpTemp << endl;
+	//*
+	string errorStatus = "200";
 	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
-	  //std::cout << httpTemp <<endl;
+	
 	fstream wantedFile;
-	wantedFile.open(url+filedir); //find the http requested file in the file directory
+	wantedFile.open(filedir+url); //find the http requested file in the file directory
 	if(!wantedFile)
 	  {
-	    cerr << "Open Failure\n";
-	    return -1;//TODO: Need to return 404 as httpresponse
+	    //cerr << "Open Failure\n";
+	    errorStatus = "404";
+	    
 	  }
+	
 	string fileBody, holder;
 	while(getline(wantedFile,holder))
-	  fileBody+=(holder+'\n'); 
+	  fileBody+=(holder+ '\n'); 
+	
+	//cout << fileBody << endl;
 	
 	HttpResponse response;
 	response.setBody(fileBody);
 	response.setVersion("HTTP/1.0");
-	response.setStatus("200"); // or other error cases
-
-	//Workaround
+	response.setStatus(errorStatus); // or other error cases
+	response.setDescription("OK"); //Other error cases
+     
      
 	
 	response.setHeader("Content-Length", to_string(fileBody.size()));
+	
+	string responseMessage = response.encode();//Takes care of first line
+	//cout << responseMessage << endl;
+	//*/
+	
+	send(clientSockfd, responseMessage.c_str(), responseMessage.size(), 0);
+
 	close(clientSockfd);
 
 	return 0;
