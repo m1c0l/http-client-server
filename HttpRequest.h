@@ -18,7 +18,7 @@ private:
 	string m_url;
 	string m_method;
 
-	virtual void decodeFirstLine(string line);
+	virtual int decodeFirstLine(string line);
 	virtual string encodeFirstLine();
 };
 

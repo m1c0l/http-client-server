@@ -18,7 +18,7 @@ private:
 	string m_status;
 	string m_statusDescription;
 
-	virtual void decodeFirstLine(string line);
+	virtual int decodeFirstLine(string line);
 	virtual string encodeFirstLine();
 };
 
