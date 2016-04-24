@@ -25,6 +25,18 @@ int HttpRequest::decodeFirstLine(string line) {
 	ss << line;
 	string method, url, version;
 	ss >> method >> url >> version;
+	if (method != "GET") {
+		// only GET supported
+		return 501;
+	}
+	if (version == "HTTP/1.1") {
+		// this HTTP version not implemented yet
+		return 505;
+	}
+	else if (version != "HTTP/1.0") {
+		// bad version string
+		return 400;
+	}
 	setMethod(method);
 	setUrl(url);
 	setVersion(version);

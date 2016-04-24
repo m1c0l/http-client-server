@@ -71,13 +71,15 @@ int HttpMessage::decode(string encoded) {
 			break;
 
 		if (firstLine) {
-			if (decodeFirstLine(line) == 400) {
-				return 400;
+			int decodeStatus = decodeFirstLine(line);
+			if (decodeStatus) {
+				return decodeStatus;
 			}
 		}
 		else {
-			if (decodeHeaderLine(line) == 400) {
-				return 400;
+			int decodeStatus = decodeHeaderLine(line);
+			if (decodeStatus) {
+				return decodeStatus;
 			}
 		}
 
