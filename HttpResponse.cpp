@@ -7,7 +7,10 @@ void HttpResponse::decodeFirstLine(string line) {
 	ss << line;
 
 	string version, status, description;
-	ss >> version >> status >> description;
+	ss >> version >> status;
+	ss.ignore(1000, ' ');
+	getline(ss, description);
+
 	setVersion(version);
 	setStatus(status);
 	setDescription(description);

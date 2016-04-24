@@ -145,18 +145,23 @@ int main(int argc, char **argv) {
 	HttpResponse resp;
 	resp.decode(responseBuf);
 
-	// save retrieved file
-	string filenameCopy = filename.c_str(); // don't modify actual string
-	string base = basename((char*)filenameCopy.c_str());
-	if (filename[filename.size() - 1] == '/') {
-		base = "index.html";
+	// check response status
+	if (resp.getStatus() == "200") {
+		// save retrieved file
+		string filenameCopy = filename.c_str();
+		string base = basename((char*)filenameCopy.c_str());
+		if (filename[filename.size() - 1] == '/') {
+			base = "index.html";
+		}
+
+		ofstream of;
+		of.open(base);
+		of << resp.getBody();
+		of.close();
 	}
-
-	ofstream of;
-	of.open(base);
-	of << resp.getBody();
-	of.close();
-
+	else {
+		cout << resp.getStatus() + " " + resp.getDescription() << endl;
+	}
 
 	return 0;
 }
