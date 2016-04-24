@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 	// send/receive data to/from connection
 	bool isEnd = false;
 	string input;
-	char buf[BUFFER_SIZE] = {0};
+	char buf[BUFFER_SIZE + 1] = {0};
 
 	HttpRequest req;
 	req.setMethod("GET");
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 	string responseBuf;
 	while (!isEnd) {
 		memset(buf, '\0', sizeof(buf));
-		
+
 		int recv_status = 0;
 		if ((recv_status = recv(sockfd, buf, BUFFER_SIZE, 0)) == -1) {
 			perror("recv");
