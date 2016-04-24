@@ -62,13 +62,19 @@ int main(int argc, char **argv) {
 	// accept a new connection
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrSize = sizeof(clientAddr);
-	int clientSockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
+	int clientSockfd;
+	
+	//Start Multithreading Magic
+	while( clientSockfd= accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize)){
 
 	if (clientSockfd == -1) {
 		perror("accept");
 		return 4;
 	}
 
+	}
+
+	
 	char ipstr[INET_ADDRSTRLEN] = {'\0'};
 	inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
 	std::cout << "Accept a connection from: " << ipstr << ":" <<
