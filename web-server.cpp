@@ -27,66 +27,38 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	std::cout << "Accept a connection from: " << ipstr << ":" <<
 		ntohs(clientAddr.sin_port) << std::endl;
 
-	// read/write data from/into the connection
 	char buf[BUFFER_SIZE] = {0};
-	std::stringstream ss;
-	stringstream temp;
-
 	string httpTemp = "";
-	
 	int startInd =0;
-	//int endInd = BUFFER_SIZE-1;
 	HttpRequest message;
 	string errorStatus = "200";
-	
-	while (true) {
+
+	// read/write data from/into the connection
+	while (true)
+	  {
 		memset(buf, '\0', sizeof(buf));
 
 		if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
 			perror("recv");
 			return;
 		}
-		
-		
-		if (temp.str() == "close\n")
-		  break;
-		//ss << buf << std::endl;
-		//std::cout << buf << std::endl;
-				
+	   				
 		int x;
 
-		temp << buf << endl;
 		httpTemp += buf;
-		//cout << httpTemp << endl;
+		
 		x = httpTemp.find(CRLF, startInd);
 		if(x == -1)
 		  {startInd += BUFFER_SIZE;}
 		else
 		  {
-		    httpTemp.resize(x+5); //httpTemp is string of Http message, maybe change to stringstream later? 
-		    int decodeStatus = message.decode(httpTemp);
-		    if (decodeStatus) {
-		    	errorStatus = to_string(decodeStatus);
-		    }
+		    httpTemp.resize(x+5); 
+		    if( message.decode(httpTemp))
+		      	errorStatus = to_string(decodeStatus);
 		    break;
-
-		    /*  if (send(clientSockfd, httpTemp,httpTemp.size(), 0) == -1) {
-			perror("send");
-			return 6;
-			}*/
-		  }
-
-		/*
-		if (temp.str() == "close\n"){
-		 std::cout << "BREAK" << std::endl;
-		  isEnd = true;
-		  break;
-		}
-		*/
-		temp.str("");
+		  }	    
 	}
 	
-	//cout << httpTemp << endl;
 	//*
 	
 	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
@@ -178,7 +150,7 @@ int main(int argc, char **argv) {
 	  if (clientSockfd == -1) {
 	    perror("accept");
 	    return 4;
-	}
+	  }
 	  thread{thread_func, clientAddr, filedir, clientSockfd}.detach();
 	  
 	}
