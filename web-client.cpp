@@ -146,11 +146,13 @@ int main(int argc, char **argv) {
 	resp.decode(responseBuf);
 
 	// save retrieved file
-	ofstream of;
-	string base = basename((char*)filename.c_str());
-	if (filename == "/") {
+	string filenameCopy = filename.c_str(); // don't modify actual string
+	string base = basename((char*)filenameCopy.c_str());
+	if (filename[filename.size() - 1] == '/') {
 		base = "index.html";
 	}
+
+	ofstream of;
 	of.open(base);
 	of << resp.getBody();
 	of.close();
