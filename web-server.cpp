@@ -62,8 +62,9 @@ int join() {
 		else
 		  {
 		    httpTemp.resize(x+5); //httpTemp is string of Http message, maybe change to stringstream later? 
-		    if (message.decode(httpTemp) == 400) {
-		    	errorStatus = "400";
+		    int decodeStatus = message.decode(httpTemp);
+		    if (decodeStatus) {
+		    	errorStatus = to_string(decodeStatus);
 		    }
 		    break;
 
