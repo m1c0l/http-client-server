@@ -1,0 +1,10 @@
+#!/bin/bash
+for i in {1..5}
+do
+	if [ ! -d "$i" ]; then
+		mkdir "$i"
+	fi
+	cd "$i"
+	../../web-client localhost:4000/bigfile &
+	cd ..
+done
