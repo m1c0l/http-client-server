@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 	req->setHeader("Host", hostname);
 
 	// check for timeout
-	chrono::seconds timer(3);
+	chrono::seconds timer(30);
 	future<HttpResponse*> promise = async(launch::async, getResponse,
 					sockfd, (sockaddr*)&serverAddr, req);
 
