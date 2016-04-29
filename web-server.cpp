@@ -52,9 +52,11 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		  {startInd += BUFFER_SIZE;}
 		else
 		  {
-		    httpTemp.resize(x+5); 
-		    if( message.decode(httpTemp))
+		    httpTemp.resize(x+5);
+		    int decodeStatus = message.decode(httpTemp);
+		    if(decodeStatus) {
 		      	errorStatus = to_string(decodeStatus);
+		    }
 		    break;
 		  }	    
 	}
