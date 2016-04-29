@@ -10,6 +10,8 @@
 #include <libgen.h>
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <future>
 
 #include "HttpRequest.h"
 #include "HttpResponse.h"
@@ -18,6 +20,8 @@ using namespace std;
 
 
 const int BUFFER_SIZE = 200;
+
+HttpResponse* getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req);
 
 int main(int argc, char **argv) {
 	if (argc != 2) {
@@ -86,67 +90,52 @@ int main(int argc, char **argv) {
 		cout << "  " << ipstr << "\n";
 	}
 
-	// create a socket using TCP IP
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
 	struct sockaddr_in serverAddr;
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(stoi(port));     // short, network byte order
 	serverAddr.sin_addr.s_addr = inet_addr(ipstr);
 	memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
-	// connect to the server
-	if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-		perror("connect");
-		return 2;
-	}
 
+	/*
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	if (getsockname(sockfd, (struct sockaddr *)&clientAddr, &clientAddrLen) == -1) {
 		perror("getsockname");
 		return 3;
 	}
+	*/
+
+	// create a socket using TCP IP
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 	// send/receive data to/from connection
-	bool isEnd = false;
-	string input;
-	char buf[BUFFER_SIZE + 1] = {0};
+	HttpRequest* req = new HttpRequest();
+	req->setMethod("GET");
+	req->setUrl(filename);
+	req->setVersion("HTTP/1.0");
+	req->setHeader("Host", hostname);
 
-	HttpRequest req;
-	req.setMethod("GET");
-	req.setUrl(filename);
-	req.setVersion("HTTP/1.0");
-	req.setHeader("Host", hostname);
-	string msg = req.encode();
+	// check for timeout
+	chrono::seconds timer(3);
+	future<HttpResponse*> promise = async(launch::async, getResponse,
+					sockfd, (sockaddr*)&serverAddr, req);
 
-	if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
-		perror("send");
-		return 4;
+	if (promise.wait_for(timer) == future_status::timeout) {
+		// abort if request times out
+		close(sockfd);
+		cerr << "Connection timed out." << '\n';
+		return 2;
 	}
 
-	string responseBuf;
-	while (!isEnd) {
-		memset(buf, '\0', sizeof(buf));
-
-		int recv_status = 0;
-		if ((recv_status = recv(sockfd, buf, BUFFER_SIZE, 0)) == -1) {
-			perror("recv");
-			return 5;
-		}
-		else if (!recv_status) {
-			break;
-		}
-		responseBuf += buf;
-	}
+	HttpResponse* resp = promise.get();
 	close(sockfd);
-
-	// decode response
-	HttpResponse resp;
-	resp.decode(responseBuf);
+	if (resp == nullptr) {
+		return 1;
+	}
 
 	// check response status
-	if (resp.getStatus() == "200") {
+	if (resp->getStatus() == "200") {
 		// save retrieved file
 		string filenameCopy = filename.c_str();
 		string base = basename((char*)filenameCopy.c_str());
@@ -156,12 +145,47 @@ int main(int argc, char **argv) {
 
 		ofstream of;
 		of.open(base);
-		of << resp.getBody();
+		of << resp->getBody();
 		of.close();
 	}
 	else {
-		cout << resp.getStatus() + " " + resp.getDescription() << endl;
+		cout << resp->getStatus() + " " + resp->getDescription() << '\n';
 	}
 
 	return 0;
+}
+
+
+HttpResponse* getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req) {
+	// connect to the server
+	if (connect(sockfd, serverAddr, sizeof(*serverAddr)) == -1) {
+		perror("connect");
+		return nullptr;
+	}
+
+	string msg = req->encode();
+	if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
+		perror("send");
+		return nullptr;
+	}
+
+	char buf[BUFFER_SIZE + 1] = {0};
+
+	string responseBuf;
+	while (true) {
+		memset(buf, '\0', sizeof(buf));
+
+		int recv_status = 0;
+		if ((recv_status = recv(sockfd, buf, BUFFER_SIZE, 0)) == -1) {
+			perror("recv");
+			return nullptr;
+		}
+		else if (!recv_status) {
+			break;
+		}
+		responseBuf += buf;
+	}
+	HttpResponse* res = new HttpResponse();
+	res->decode(responseBuf);
+	return res;
 }
