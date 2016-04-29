@@ -21,7 +21,7 @@ const int BUFFER_SIZE = 200;
 
 int main(int argc, char **argv) {
 	if (argc != 2) {
-		cerr << "Usage: ./webclient [URL]\n";	
+		cerr << "Usage: " << argv[0] << " [URL]" << '\n';
 		return 1;
 	}
 

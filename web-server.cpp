@@ -99,7 +99,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 int main(int argc, char **argv) {
 	if (argc > 4) {
-		cerr << "usage: web-server [hostname] [port] [file-dir]" << '\n';
+		cerr << "usage: " << argv[0] << " [hostname] [port] [file-dir]" << '\n';
 		return 1;
 	}
 
