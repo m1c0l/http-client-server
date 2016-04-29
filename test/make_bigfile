@@ -1,0 +1,2 @@
+# Make a big file and throw it in /tmp
+base64 /dev/urandom | head --bytes=250MB > /tmp/bigfile
