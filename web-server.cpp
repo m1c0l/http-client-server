@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <sys/stat.h>
 
 #include "HttpMessage.h"
 #include "HttpResponse.h"
@@ -31,7 +32,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	string httpTemp = "";
 	int startInd =0;
 	HttpRequest message;
-	string errorStatus = "200";
+	int status = 200;
 
 	// read/write data from/into the connection
 	while (true)
@@ -43,19 +44,18 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 			return;
 		}
 
-		int x;
-
 		httpTemp += buf;
 
-		x = httpTemp.find(CRLF, startInd);
-		if(x == -1)
-		{startInd += BUFFER_SIZE;}
+		size_t x = httpTemp.find(CRLF, startInd);
+		if(x == string::npos) {
+			startInd += BUFFER_SIZE;
+		}
 		else
 		{
 			httpTemp.resize(x+5);
 			int decodeStatus = message.decode(httpTemp);
 			if(decodeStatus) {
-				errorStatus = to_string(decodeStatus);
+				status = decodeStatus;
 			}
 			break;
 		}
@@ -66,12 +66,24 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
 
 	fstream wantedFile;
-	wantedFile.open(filedir+url); //find the http requested file in the file directory
+	string filepath = filedir + url;
+	// find the http requested file in the file directory
+	wantedFile.open(filepath);
 	if(!wantedFile)
 	{
-		//cerr << "Open Failure\n";
-		errorStatus = "404";
+		perror("fstream::open");
+		status = 404;
+	}
 
+	// find body length
+	off_t bodyLength = 0;
+	struct stat st;
+	if (stat(filepath.c_str(), &st) == 0) {
+		bodyLength = st.st_size;
+	}
+	else {
+		perror("stat");
+		status = 404;
 	}
 
 	string fileBody, holder;
@@ -81,14 +93,12 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	//cout << fileBody << endl;
 
 	HttpResponse response;
-	response.setBody(fileBody);
 	response.setVersion("HTTP/1.0");
-	response.setStatus(errorStatus); // or other error cases
+	response.setStatus(to_string(status)); // or other error cases
 	response.setDescription("OK"); //Other error cases
-
-
-
-	response.setHeader("Content-Length", to_string(fileBody.size()));
+	if (status == 200) {
+		response.setHeader("Content-Length", to_string(bodyLength));
+	}
 
 	string responseMessage = response.encode();//Takes care of first line
 	//cout << responseMessage << endl;
