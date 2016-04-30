@@ -28,7 +28,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	std::cout << "Accept a connection from: " << ipstr << ":" <<
 		ntohs(clientAddr.sin_port) << std::endl;
 
-	char buf[BUFFER_SIZE] = {0};
+	char buf[BUFFER_SIZE + 1] = {0};
 	string httpTemp = "";
 	int startInd =0;
 	HttpRequest message;
@@ -61,19 +61,11 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		}
 	}
 
-	//*
 
 	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
 
-	fstream wantedFile;
-	string filepath = filedir + url;
 	// find the http requested file in the file directory
-	wantedFile.open(filepath);
-	if(!wantedFile)
-	{
-		perror("fstream::open");
-		status = 404;
-	}
+	string filepath = filedir + url;
 
 	// find body length
 	off_t bodyLength = 0;
@@ -86,12 +78,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		status = 404;
 	}
 
-	string fileBody, holder;
-	while(getline(wantedFile,holder))
-		fileBody+=(holder+ '\n');
-
-	//cout << fileBody << endl;
-
+	// prepare response header
 	HttpResponse response;
 	response.setVersion("HTTP/1.0");
 	response.setStatus(to_string(status)); // or other error cases
@@ -100,11 +87,28 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		response.setHeader("Content-Length", to_string(bodyLength));
 	}
 
-	string responseMessage = response.encode();//Takes care of first line
-	//cout << responseMessage << endl;
-	//*/
+	// send response header
+	string header = response.encode();
+	if (send(clientSockfd, header.c_str(), header.size(), 0) == -1) {
+		perror("send");
+	}
 
-	send(clientSockfd, responseMessage.c_str(), responseMessage.size(), 0);
+	// send requested file
+	ifstream wantedFile;
+	wantedFile.open(filepath);
+	if(!wantedFile) {
+		perror("fstream::open");
+		status = 404;
+	}
+	while (wantedFile) {
+		memset(buf, 0, BUFFER_SIZE);
+		wantedFile.read(buf, BUFFER_SIZE);
+		if (send(clientSockfd, buf, wantedFile.gcount(), 0) == -1) {
+			perror("send");
+			break;
+		}
+	}
+	wantedFile.close();
 
 	close(clientSockfd);
 }
