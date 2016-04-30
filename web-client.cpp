@@ -21,7 +21,8 @@ using namespace std;
 
 const int BUFFER_SIZE = 200;
 
-HttpResponse* getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req);
+int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
+		string filename);
 
 int main(int argc, char **argv) {
 	if (argc != 2) {
@@ -118,8 +119,8 @@ int main(int argc, char **argv) {
 
 	// check for timeout
 	chrono::seconds timer(30);
-	future<HttpResponse*> promise = async(launch::async, getResponse,
-					sockfd, (sockaddr*)&serverAddr, req);
+	future<int> promise = async(launch::async, getResponse,
+			sockfd, (sockaddr*)&serverAddr, req, filename);
 
 	if (promise.wait_for(timer) == future_status::timeout) {
 		// abort if request times out
@@ -128,64 +129,100 @@ int main(int argc, char **argv) {
 		return 2;
 	}
 
-	HttpResponse* resp = promise.get();
+	int resp_status = promise.get();
 	close(sockfd);
-	if (resp == nullptr) {
-		return 1;
+	return resp_status;
+}
+
+
+int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
+		string filename) {
+	// connect to the server
+	if (connect(sockfd, serverAddr, sizeof(*serverAddr)) == -1) {
+		perror("connect");
+		return 4;
 	}
 
-	// check response status
-	if (resp->getStatus() == "200") {
-		// save retrieved file
+	string msg = req->encode();
+	if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
+		perror("send");
+		return 5;
+	}
+
+	char buf[BUFFER_SIZE + 1] = {0};
+	string resBuf;
+	HttpResponse* res = new HttpResponse();
+
+	string eoh = "\r\n\r\n"; // end of header
+	int recv_status = 0;
+
+	while (true) {
+		memset(buf, '\0', sizeof(buf));
+
+		recv_status = recv(sockfd, buf, BUFFER_SIZE, 0);
+		if (recv_status == -1) {
+			perror("recv");
+			return 6;
+		}
+		resBuf += buf;
+
+		// when the entire header has been read, decode it
+		size_t pos = resBuf.find(eoh);
+		if (pos != string::npos) {
+			size_t end = pos + eoh.size();
+
+			// decode the header
+			res->decode(resBuf.substr(0, end));
+
+			// discard the header but keep the rest of the buffer
+			resBuf = resBuf.substr(end, resBuf.size());
+			break;
+		}
+
+		// if end of header is not detected but no incoming data
+		if (recv_status == 0) {
+			cerr << "Incomplete HTTP response" << '\n';
+			return 7;
+		}
+	}
+
+
+	// 200 OK
+	if (res->getStatus() == "200") {
+		// get file name
 		string filenameCopy = filename.c_str();
 		string base = basename((char*)filenameCopy.c_str());
 		if (filename[filename.size() - 1] == '/') {
 			base = "index.html";
 		}
 
+		// save retrieved file
 		ofstream of;
 		of.open(base);
-		of << resp->getBody();
-		of.close();
+
+		of << resBuf; // leftover data from reading header
+
+		while (true) {
+			memset(buf, '\0', sizeof(buf));
+
+			recv_status = recv(sockfd, buf, BUFFER_SIZE, 0);
+			if (recv_status == -1) {
+				perror("recv");
+				of.close();
+				return 8;
+			}
+			if (recv_status == 0) {
+				of.close();
+				break;
+			}
+
+			of << buf;
+		}
 	}
+	// not 200, just output the status and description
 	else {
-		cout << resp->getStatus() + " " + resp->getDescription() << '\n';
+		cout << res->getStatus() + " " + res->getDescription() << '\n';
 	}
 
 	return 0;
-}
-
-
-HttpResponse* getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req) {
-	// connect to the server
-	if (connect(sockfd, serverAddr, sizeof(*serverAddr)) == -1) {
-		perror("connect");
-		return nullptr;
-	}
-
-	string msg = req->encode();
-	if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
-		perror("send");
-		return nullptr;
-	}
-
-	char buf[BUFFER_SIZE + 1] = {0};
-
-	string responseBuf;
-	while (true) {
-		memset(buf, '\0', sizeof(buf));
-
-		int recv_status = 0;
-		if ((recv_status = recv(sockfd, buf, BUFFER_SIZE, 0)) == -1) {
-			perror("recv");
-			return nullptr;
-		}
-		else if (!recv_status) {
-			break;
-		}
-		responseBuf += buf;
-	}
-	HttpResponse* res = new HttpResponse();
-	res->decode(responseBuf);
-	return res;
 }
