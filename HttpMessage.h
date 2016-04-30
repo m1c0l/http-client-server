@@ -16,16 +16,12 @@ public:
 	void setHeader(string key, string value);
 	string getHeader(string key);
 
-	void setBody(string body);
-	string getBody();
-
 	int decode(string encoded);
 	string encode();
 
 private:
 	string m_version;
 	unordered_map<string, string> m_headers;
-	string m_body;
 
 	virtual int decodeFirstLine(string line) = 0;
 	virtual string encodeFirstLine() = 0;
