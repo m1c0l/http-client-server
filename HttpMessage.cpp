@@ -44,16 +44,6 @@ int HttpMessage::decodeHeaderLine(string line)
 	return 0;
 }
 
-void HttpMessage::setBody(string body)
-{
-	m_body = body;
-}
-
-string HttpMessage::getBody()
-{
-	return m_body;
-}
-
 int HttpMessage::decode(string encoded) {
 	stringstream ss;
 	ss << encoded;
@@ -86,12 +76,6 @@ int HttpMessage::decode(string encoded) {
 		firstLine = false;
 	}
 
-	// body
-	string length = getHeader("Content-Length");
-	if (length.size() != 0 && stoi(length) != 0) {
-		string body = encoded.substr(start, stoi(length));
-		setBody(body);
-	}
 	return 0;
 }
 
@@ -102,6 +86,5 @@ string HttpMessage::encode() {
 		msg += header.first + ": " + header.second + CRLF;
 	}
 	msg += CRLF;
-	msg += m_body;
 	return msg;
 }
