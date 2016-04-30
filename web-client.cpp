@@ -25,7 +25,7 @@ HttpResponse* getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req);
 
 int main(int argc, char **argv) {
 	if (argc != 2) {
-		cerr << "Usage: " << argv[0] << " [URL]" << '\n';
+		cerr << "usage: " << argv[0] << " [URL]" << '\n';
 		return 1;
 	}
 
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 	size_t colonPos = urlStr.find_first_of(":");
 	size_t slashPos = urlStr.find_first_of("/");
 
-	string hostname = urlStr; 
+	string hostname = urlStr;
 	if (colonPos != string::npos) {
 		hostname = urlStr.substr(0, colonPos);
 	}
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 		hostname = urlStr.substr(0, slashPos);
 	}
 
-	string port = "80"; 
+	string port = "80";
 	if (colonPos != string::npos && slashPos != string::npos) {
 		port = urlStr.substr(colonPos + 1, slashPos - colonPos - 1);
 	}
@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
 		filename = urlStr.substr(slashPos);
 	}
 
-	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";	
-	
+	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";
+
 	struct addrinfo hints;
 	struct addrinfo* res;
 
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 	// get address
 	int status = 0;
 	if ((status = getaddrinfo(hostname.c_str(), "80", &hints, &res)) != 0) {
-		cerr << "getaddrinfo: " << gai_strerror(status) << '\n'; 
+		cerr << "getaddrinfo: " << gai_strerror(status) << '\n';
 		return 2;
 	}
 
@@ -98,13 +98,13 @@ int main(int argc, char **argv) {
 
 
 	/*
-	struct sockaddr_in clientAddr;
-	socklen_t clientAddrLen = sizeof(clientAddr);
-	if (getsockname(sockfd, (struct sockaddr *)&clientAddr, &clientAddrLen) == -1) {
-		perror("getsockname");
-		return 3;
-	}
-	*/
+	   struct sockaddr_in clientAddr;
+	   socklen_t clientAddrLen = sizeof(clientAddr);
+	   if (getsockname(sockfd, (struct sockaddr *)&clientAddr, &clientAddrLen) == -1) {
+	   perror("getsockname");
+	   return 3;
+	   }
+	   */
 
 	// create a socket using TCP IP
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);

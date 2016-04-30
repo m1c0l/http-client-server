@@ -20,8 +20,8 @@ const int  BUFFER_SIZE = 200;
 using namespace std;
 
 void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
-  
-  //        socklen_t clientAddrSize = sizeof(clientAddr);
+
+	//        socklen_t clientAddrSize = sizeof(clientAddr);
 	char ipstr[INET_ADDRSTRLEN] = {'\0'};
 	inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
 	std::cout << "Accept a connection from: " << ipstr << ":" <<
@@ -35,65 +35,65 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 	// read/write data from/into the connection
 	while (true)
-	  {
+	{
 		memset(buf, '\0', sizeof(buf));
 
 		if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
 			perror("recv");
 			return;
 		}
-	   				
+
 		int x;
 
 		httpTemp += buf;
-		
+
 		x = httpTemp.find(CRLF, startInd);
 		if(x == -1)
-		  {startInd += BUFFER_SIZE;}
+		{startInd += BUFFER_SIZE;}
 		else
-		  {
-		    httpTemp.resize(x+5);
-		    int decodeStatus = message.decode(httpTemp);
-		    if(decodeStatus) {
-		      	errorStatus = to_string(decodeStatus);
-		    }
-		    break;
-		  }	    
+		{
+			httpTemp.resize(x+5);
+			int decodeStatus = message.decode(httpTemp);
+			if(decodeStatus) {
+				errorStatus = to_string(decodeStatus);
+			}
+			break;
+		}
 	}
-	
+
 	//*
-	
+
 	string url = message.getUrl();//need to decide when/how to process absolute url vs ppath
-	
+
 	fstream wantedFile;
 	wantedFile.open(filedir+url); //find the http requested file in the file directory
 	if(!wantedFile)
-	  {
-	    //cerr << "Open Failure\n";
-	    errorStatus = "404";
-	    
-	  }
-	
+	{
+		//cerr << "Open Failure\n";
+		errorStatus = "404";
+
+	}
+
 	string fileBody, holder;
 	while(getline(wantedFile,holder))
-	  fileBody+=(holder+ '\n'); 
-	
+		fileBody+=(holder+ '\n');
+
 	//cout << fileBody << endl;
-	
+
 	HttpResponse response;
 	response.setBody(fileBody);
 	response.setVersion("HTTP/1.0");
 	response.setStatus(errorStatus); // or other error cases
 	response.setDescription("OK"); //Other error cases
-     
-     
-	
+
+
+
 	response.setHeader("Content-Length", to_string(fileBody.size()));
-	
+
 	string responseMessage = response.encode();//Takes care of first line
 	//cout << responseMessage << endl;
 	//*/
-	
+
 	send(clientSockfd, responseMessage.c_str(), responseMessage.size(), 0);
 
 	close(clientSockfd);
@@ -142,22 +142,22 @@ int main(int argc, char **argv) {
 
 	// accept a new connection
 	struct sockaddr_in clientAddr;
-	
+
 	int clientSockfd;
 
-	socklen_t clientAddrSize = sizeof(clientAddr);	
+	socklen_t clientAddrSize = sizeof(clientAddr);
 	//Start Multithreading Magic
 	while( (clientSockfd= accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize))){
 
-	  if (clientSockfd == -1) {
-	    perror("accept");
-	    return 4;
-	  }
-	  thread{thread_func, clientAddr, filedir, clientSockfd}.detach();
-	  
+		if (clientSockfd == -1) {
+			perror("accept");
+			return 4;
+		}
+		thread{thread_func, clientAddr, filedir, clientSockfd}.detach();
+
 	}
 
-	
+
 
 	return 0;
 }
