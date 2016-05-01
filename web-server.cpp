@@ -11,14 +11,17 @@
 #include <sstream>
 #include <thread>
 #include <sys/stat.h>
+#include <chrono>
+#include <future>
 
 #include "HttpMessage.h"
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 
 const int  BUFFER_SIZE = 200;
-
+const int timeout = 5; // seconds
 using namespace std;
+
 
 string codeToDescription (int code)
 {
@@ -32,6 +35,9 @@ string codeToDescription (int code)
   case 404:
     return "Not found";
     break;
+  case 408:
+    return "Request timeout";
+    break;
   case 501:
     return "Not implemented";
     break;
@@ -44,6 +50,19 @@ string codeToDescription (int code)
   }
   return "";
 }
+
+template<typename T>
+int waitFor(future<T>& promise) {
+  chrono::seconds timer(timeout);
+
+  if (promise.wait_for(timer) == future_status::timeout) {
+    cerr << "Connection timed out.\n"; 
+    return -1;
+  }
+  return 0;
+}
+
+
 
 void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
@@ -64,14 +83,25 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	{
 		memset(buf, '\0', sizeof(buf));
 
-		if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
+		/*
+		  if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
 			perror("recv");
 			return;
 		}
-
+		*/
+		future<ssize_t> recvFut = async (launch::async, recv, clientSockfd, buf,                                                          BUFFER_SIZE, 0);
+		if(waitFor(recvFut) == -1){
+		  close(clientSockfd);
+		  status = 408;
+		}
+		if(recvFut.get() == -1){
+		  perror("recv");
+		  return;
+		}
+		
 		httpTemp += buf;
 
-		size_t x = httpTemp.find(CRLF + CRLF, startInd);
+		size_t x = httpTemp.find("/r/n/r/n", startInd);
 		if(x == string::npos) {
 			startInd += BUFFER_SIZE;
 		}
@@ -79,7 +109,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		{
 			httpTemp.resize(x+5);
 			int decodeStatus = message.decode(httpTemp);
-			if(decodeStatus) {
+			if(decodeStatus && status ==200) {
 				status = decodeStatus;
 			}
 			break;
