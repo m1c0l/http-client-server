@@ -27,9 +27,8 @@ struct Url {
 };
 
 Url parseUrl(string urlStr) {
-	// process URL
+	// remove http:// at start of URL
 	if (urlStr.substr(0, 7) == "http://") {
-		// remove http:// at start of URL
 		urlStr = urlStr.substr(7);
 	}
 
@@ -57,8 +56,6 @@ Url parseUrl(string urlStr) {
 		filename = urlStr.substr(slashPos);
 	}
 
-	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";
-
 	Url url;
 	url.host = hostname;
 	url.port = port;
@@ -82,7 +79,6 @@ struct sockaddr_in getServerAddr(string hostname, string port) {
 		exit(2);
 	}
 
-	cout << "IP addresses for " << hostname << ": " << '\n';
 	struct addrinfo* p = res;
 	// convert address to IPv4 address
 	struct sockaddr_in* ipv4;
@@ -90,9 +86,8 @@ struct sockaddr_in getServerAddr(string hostname, string port) {
 	if (p != 0) {
 		ipv4 = (struct sockaddr_in*)p->ai_addr;
 
-		// convert the IP to a string and print it:
+		// convert the IP to a string
 		inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
-		cout << "  " << ipstr << "\n";
 	}
 	else {
 		cerr << "IP address not found for " << hostname << endl;
