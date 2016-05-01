@@ -71,7 +71,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 		httpTemp += buf;
 
-		size_t x = httpTemp.find(CRLF, startInd);
+		size_t x = httpTemp.find(CRLF + CRLF, startInd);
 		if(x == string::npos) {
 			startInd += BUFFER_SIZE;
 		}
