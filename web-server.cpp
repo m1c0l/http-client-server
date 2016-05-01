@@ -39,7 +39,7 @@ string codeToDescription (int code)
     return "HTTP version not supported";
     break;
   default:
-    perror("code number")
+    perror("code number");
     return "";
   }
   return "";
