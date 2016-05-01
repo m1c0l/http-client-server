@@ -104,10 +104,10 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		status = 404;
 	}
 
-	if (S_ISDIR(st.st_mode)) {
+	if (S_ISDIR(st.st_mode) && status != 200) {
 	  perror("file type");
 	  status = 404;
-	  }
+	}
 
 	// prepare response header
 	HttpResponse response;
