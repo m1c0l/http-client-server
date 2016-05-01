@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	int ret = 0;
+	thread *t = new thread[argc];
 
 	// send a request for each url
 	for (int i = 1; i < argc; i++) {
@@ -266,11 +266,15 @@ int main(int argc, char **argv) {
 		req->setVersion("HTTP/1.0");
 		req->setHeader("Host", url.host);
 
-		if (processRequest((sockaddr*)&serverAddr, req, url.path) != 0) {
-			ret = 1;
-		}
-
+		// send the request and retrieve the file
+		t[i] = thread(processRequest, (sockaddr*)&serverAddr, req,
+			url.path);
 	}
 
-	return ret;
+	// join threads
+	for (int i = 1; i < argc; i++) {
+		t[i].join();
+	}
+
+	return 0;
 }
