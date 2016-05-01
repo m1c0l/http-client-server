@@ -20,6 +20,30 @@ const int  BUFFER_SIZE = 200;
 
 using namespace std;
 
+string codeToDescription (int code)
+{
+  switch (code){
+  case 200:
+    return "OK";
+    break;
+  case 400:
+    return "Bad request";
+    break;
+  case 404:
+    return "Not found";
+    break;
+  case 501:
+    return "Not implemented";
+    break;
+  case 505:
+    return "HTTP version not supported";
+    break;
+  default:
+    return "OK";
+  }
+  return "";
+}
+
 void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 	//        socklen_t clientAddrSize = sizeof(clientAddr);
@@ -87,7 +111,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	HttpResponse response;
 	response.setVersion("HTTP/1.0");
 	response.setStatus(to_string(status)); // or other error cases
-	response.setDescription("OK"); //Other error cases
+	response.setDescription(codeToDescription(status));
 	if (status == 200) {
 		response.setHeader("Content-Length", to_string(bodyLength));
 	}
@@ -177,8 +201,6 @@ int main(int argc, char **argv) {
 		thread{thread_func, clientAddr, filedir, clientSockfd}.detach();
 
 	}
-
-
 
 	return 0;
 }
