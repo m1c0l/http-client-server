@@ -18,20 +18,16 @@
 
 using namespace std;
 
-
 const int BUFFER_SIZE = 200;
 
-int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
-		string filename);
+struct Url {
+	string host;
+	string port;
+	string path;
+};
 
-int main(int argc, char **argv) {
-	if (argc != 2) {
-		cerr << "usage: " << argv[0] << " [URL]" << '\n';
-		return 1;
-	}
-
+Url parseUrl(string urlStr) {
 	// process URL
-	string urlStr = argv[1];
 	if (urlStr.substr(0, 7) == "http://") {
 		// remove http:// at start of URL
 		urlStr = urlStr.substr(7);
@@ -63,6 +59,14 @@ int main(int argc, char **argv) {
 
 	cout << "hostname: " << hostname << " port: " << port << " filename: " << filename << "\n";
 
+	Url url;
+	url.host = hostname;
+	url.port = port;
+	url.path = filename;
+	return url;
+}
+
+struct sockaddr_in getServerAddr(string hostname, string port) {
 	struct addrinfo hints;
 	struct addrinfo* res;
 
@@ -73,12 +77,12 @@ int main(int argc, char **argv) {
 
 	// get address
 	int status = 0;
-	if ((status = getaddrinfo(hostname.c_str(), "80", &hints, &res)) != 0) {
+	if ((status = getaddrinfo(hostname.c_str(), port.c_str(), &hints, &res)) != 0) {
 		cerr << "getaddrinfo: " << gai_strerror(status) << '\n';
-		return 2;
+		exit(2);
 	}
 
-	cout << "IP addresses for " << argv[1] << ": " << '\n';
+	cout << "IP addresses for " << hostname << ": " << '\n';
 	struct addrinfo* p = res;
 	// convert address to IPv4 address
 	struct sockaddr_in* ipv4;
@@ -90,50 +94,18 @@ int main(int argc, char **argv) {
 		inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
 		cout << "  " << ipstr << "\n";
 	}
+	else {
+		cerr << "IP address not found for " << hostname << endl;
+		exit(3);
+	}
 
 	struct sockaddr_in serverAddr;
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(stoi(port));     // short, network byte order
 	serverAddr.sin_addr.s_addr = inet_addr(ipstr);
 	memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
-
-
-	/*
-	   struct sockaddr_in clientAddr;
-	   socklen_t clientAddrLen = sizeof(clientAddr);
-	   if (getsockname(sockfd, (struct sockaddr *)&clientAddr, &clientAddrLen) == -1) {
-	   perror("getsockname");
-	   return 3;
-	   }
-	   */
-
-	// create a socket using TCP IP
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	// send/receive data to/from connection
-	HttpRequest* req = new HttpRequest();
-	req->setMethod("GET");
-	req->setUrl(filename);
-	req->setVersion("HTTP/1.0");
-	req->setHeader("Host", hostname);
-
-	// check for timeout
-	chrono::seconds timer(30);
-	future<int> promise = async(launch::async, getResponse,
-			sockfd, (sockaddr*)&serverAddr, req, filename);
-
-	if (promise.wait_for(timer) == future_status::timeout) {
-		// abort if request times out
-		close(sockfd);
-		cerr << "Connection timed out." << '\n';
-		return 2;
-	}
-
-	int resp_status = promise.get();
-	close(sockfd);
-	return resp_status;
+	return serverAddr;
 }
-
 
 int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
 		string filename) {
@@ -225,4 +197,47 @@ int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
 	}
 
 	return 0;
+}
+
+
+int main(int argc, char **argv) {
+	if (argc < 2) {
+		cerr << "usage: " << argv[0] << " [URL] [URL] ..." << '\n';
+		return 1;
+	}
+
+	int resp_status = 0;
+
+	// send a request for each url
+	for (int i = 1; i < argc; i++) {
+
+		Url url = parseUrl(argv[i]);
+		sockaddr_in serverAddr = getServerAddr(url.host, url.port);
+
+		// set up HTTP request
+		HttpRequest* req = new HttpRequest();
+		req->setMethod("GET");
+		req->setUrl(url.path);
+		req->setVersion("HTTP/1.0");
+		req->setHeader("Host", url.host);
+
+		// create a socket using TCP IP
+		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+		// send the request
+		chrono::seconds timer(30);
+		future<int> promise = async(launch::async, getResponse,
+				sockfd, (sockaddr*)&serverAddr, req, url.path);
+
+		// abort if request times out
+		if (promise.wait_for(timer) == future_status::timeout) {
+			close(sockfd);
+			cerr << "Connection timed out." << '\n';
+			return 2;
+		}
+		resp_status = promise.get();
+		close(sockfd);
+	}
+
+	return resp_status;
 }
