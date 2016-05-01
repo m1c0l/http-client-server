@@ -39,7 +39,8 @@ string codeToDescription (int code)
     return "HTTP version not supported";
     break;
   default:
-    return "OK";
+    perror("code number")
+    return "";
   }
   return "";
 }
@@ -104,6 +105,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	}
 
 	if (S_ISDIR(st.st_mode)) {
+	  perror("file type");
 	  status = 404;
 	  }
 
