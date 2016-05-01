@@ -37,8 +37,34 @@ int HttpRequest::decodeFirstLine(string line) {
 		// bad version string
 		return 400;
 	}
+	if (url.substr(0,7) == "http://"){
+	  url = url.substr(7);
+	}
+	size_t colonPos = url.find_first_of(":");
+	size_t slashPos = url.find_first_of("/");
+	/*
+	string hostName = url;
+	if (colonPos != string::npos) {
+	  hostname = url.substr(0,colPos);
+	}
+	else if (slashPos != string::npos) {
+	  hostname = url.substr(0,slashPos);
+	}
+
+	string port = "80";
+	if (colonPos != string::npos && slashPos != string::npos) {
+	  port = url.substr(colonPos + 1, slashPos - colonPos - 1);
+	}
+	else if (colonPos != string::npos) {
+	  port = url.substr(colonPos + 1);
+	}
+	*/
+	string filename = "/";
+	if (slashPos != string::npos) {
+	  filename = url.substr(slashPos);
+	}
 	setMethod(method);
-	setUrl(url);
+	setUrl(filename);
 	setVersion(version);
 	return 0;
 }
