@@ -57,7 +57,7 @@ int HttpMessage::decode(string encoded) {
 		line = encoded.substr(start, end - start);
 		start = end + sizeof(CRLF) - 1;
 
-		if (line.size() == 0) // end of header
+		if (line.size() == 0 && !firstLine) // end of header
 			break;
 
 		if (firstLine) {
