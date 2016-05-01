@@ -19,36 +19,29 @@
 #include "HttpRequest.h"
 
 const int  BUFFER_SIZE = 200;
-const int timeout = 5; // seconds
+const int timeout = 10; // seconds
 using namespace std;
 
 
 string codeToDescription (int code)
 {
-  switch (code){
-  case 200:
-    return "OK";
-    break;
-  case 400:
-    return "Bad request";
-    break;
-  case 404:
-    return "Not found";
-    break;
-  case 408:
-    return "Request timeout";
-    break;
-  case 501:
-    return "Not implemented";
-    break;
-  case 505:
-    return "HTTP version not supported";
-    break;
-  default:
-    perror("code number");
-    return "";
-  }
-  return "";
+	switch (code) {
+		case 200:
+			return "OK";
+		case 400:
+			return "Bad request";
+		case 404:
+			return "Not found";
+		case 408:
+			return "Request timeout";
+		case 501:
+			return "Not implemented";
+		case 505:
+			return "HTTP version not supported";
+		default:
+			perror("code number");
+			return "";
+	}
 }
 
 template<typename T>
@@ -89,10 +82,11 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 			return;
 		}
 		*/
-		future<ssize_t> recvFut = async (launch::async, recv, clientSockfd, buf,                                                          BUFFER_SIZE, 0);
+		future<ssize_t> recvFut = async (launch::async, recv, clientSockfd, buf, BUFFER_SIZE, 0);
 		if(waitFor(recvFut) == -1){
 		  close(clientSockfd);
 		  status = 408;
+		  return;
 		}
 	
 		bytesRead = recvFut.get();
@@ -103,7 +97,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 		httpTemp.append(buf, bytesRead);
 
-		size_t x = httpTemp.find("/r/n/r/n", startInd);
+		size_t x = httpTemp.find("\r\n\r\n", startInd);
 		if(x == string::npos) {
 			startInd += bytesRead;
 		}
@@ -179,17 +173,18 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 }
 
 int main(int argc, char **argv) {
-	if (argc > 4) {
-		cerr << "usage: " << argv[0] << " [hostname] [port] [file-dir]" << '\n';
+	if (argc > 5) {
+		cerr << "usage: " << argv[0] << " [hostname] [port] [file-dir] [--sync]" << '\n';
 		return 1;
 	}
 
-	string hostname, port, filedir;
+	string hostname, port, filedir, sync;
 
 	// check argc and set default parameters if needed
 	hostname = argc < 2 ? "localhost" : argv[1];
 	port = argc < 3 ? "4000" : argv[2];
 	filedir = argc < 4 ? "." : argv[3];
+	sync = argc < 5 ? "" : argv[4];
 
 	// create a socket using TCP IP
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -232,7 +227,13 @@ int main(int argc, char **argv) {
 			perror("accept");
 			return 4;
 		}
-		thread{thread_func, clientAddr, filedir, clientSockfd}.detach();
+
+		if (sync == "--sync") {
+			thread_func(clientAddr, filedir, clientSockfd);
+		}
+		else {
+			thread(thread_func, clientAddr, filedir, clientSockfd).detach();
+		}
 
 	}
 

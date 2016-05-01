@@ -102,7 +102,7 @@ struct sockaddr_in getServerAddr(string hostname, string port) {
 	return serverAddr;
 }
 
-const int timeout = 5; // seconds
+const int timeout = 10; // seconds
 
 template<typename T>
 int waitFor(future<T>& promise) {
