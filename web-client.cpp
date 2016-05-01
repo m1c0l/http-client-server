@@ -18,7 +18,7 @@
 
 using namespace std;
 
-const int BUFFER_SIZE = 1024;
+const int BUFFER_SIZE = 200;
 
 struct Url {
 	string host;
