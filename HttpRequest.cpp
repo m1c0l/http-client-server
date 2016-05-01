@@ -68,7 +68,7 @@ int HttpRequest::decodeFirstLine(string line) {
 	}
 	else if (version != "HTTP/1.0") {
 		// bad version string
-		return 400;
+	  return 400;}
 
 	return 0;
 }
