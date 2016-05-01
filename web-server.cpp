@@ -18,7 +18,7 @@
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 
-const int  BUFFER_SIZE = 200;
+const int  BUFFER_SIZE = 1024;
 const int timeout = 5; // seconds
 using namespace std;
 
