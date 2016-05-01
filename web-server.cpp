@@ -66,6 +66,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 	// find the http requested file in the file directory
 	string filepath = filedir + url;
+	  
 
 	// find body length
 	off_t bodyLength = 0;
@@ -77,6 +78,10 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		perror("stat");
 		status = 404;
 	}
+
+	if (S_ISDIR(st.st_mode)) {
+	  status = 404;
+	  }
 
 	// prepare response header
 	HttpResponse response;
@@ -95,12 +100,14 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 
 	// send requested file
 	ifstream wantedFile;
-	wantedFile.open(filepath);
+	if(status != 404)
+	  wantedFile.open(filepath);
+	
 	if(!wantedFile) {
 		perror("fstream::open");
 		status = 404;
 	}
-	while (wantedFile) {
+	while (wantedFile && (status != 404)) {
 		memset(buf, 0, BUFFER_SIZE);
 		wantedFile.read(buf, BUFFER_SIZE);
 		if (send(clientSockfd, buf, wantedFile.gcount(), 0) == -1) {
