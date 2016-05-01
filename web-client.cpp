@@ -155,7 +155,7 @@ int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
 	HttpResponse* res = new HttpResponse();
 
 	const string eoh = "\r\n\r\n"; // end of header
-	int recv_status = 0;
+	int bytesRead = 0;
 
 	// get response's header
 	while (true) {
@@ -167,12 +167,12 @@ int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
 			close(sockfd);
 			return -1;
 		}
-		recv_status = recvFut.get();
-		if (recv_status == -1) {
+		bytesRead = recvFut.get();
+		if (bytesRead == -1) {
 			perror("recv");
 			return -1;
 		}
-		resBuf += buf;
+		resBuf.append(buf, bytesRead);
 
 		// when the entire header has been read, decode it
 		size_t pos = resBuf.find(eoh);
@@ -188,7 +188,7 @@ int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
 		}
 
 		// if end of header is not detected but no incoming data
-		if (recv_status == 0) {
+		if (bytesRead == 0) {
 			cerr << "Incomplete HTTP response" << '\n';
 			close(sockfd);
 			return 7;
@@ -211,7 +211,8 @@ int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
 		ofstream of;
 		of.open(base);
 
-		of << resBuf; // leftover data from reading header
+		// leftover data from reading header
+		of.write(resBuf.c_str(), resBuf.size());
 
 		while (true) {
 			memset(buf, '\0', sizeof(buf));
@@ -223,20 +224,20 @@ int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
 				return -1;
 			}
 
-			recv_status = recvFut.get();
-			if (recv_status == -1) {
+			bytesRead = recvFut.get();
+			if (bytesRead == -1) {
 				perror("recv");
 				close(sockfd);
 				of.close();
 				return 8;
 			}
-			if (recv_status == 0) {
+			if (bytesRead == 0) {
 				of.close();
 				close(sockfd);
 				return 0;
 			}
 
-			of << buf;
+			of.write(buf, bytesRead);
 		}
 	}
 

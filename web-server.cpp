@@ -54,26 +54,28 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 		ntohs(clientAddr.sin_port) << std::endl;
 
 	char buf[BUFFER_SIZE + 1] = {0};
-	string httpTemp = "";
+	string httpTemp;
 	int startInd =0;
 	HttpRequest message;
 	int status = 200;
+	int bytesRead = 0;
 
 	// read/write data from/into the connection
 	while (true)
 	{
 		memset(buf, '\0', sizeof(buf));
 
-		if (recv(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
+		bytesRead = recv(clientSockfd, buf, BUFFER_SIZE, 0);
+		if (bytesRead == -1) {
 			perror("recv");
 			return;
 		}
 
-		httpTemp += buf;
+		httpTemp.append(buf, bytesRead);
 
 		size_t x = httpTemp.find(CRLF, startInd);
 		if(x == string::npos) {
-			startInd += BUFFER_SIZE;
+			startInd += bytesRead;
 		}
 		else
 		{
@@ -127,7 +129,7 @@ void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
 	// send requested file
 	ifstream wantedFile;
 	if(status != 404)
-	  wantedFile.open(filepath);
+		wantedFile.open(filepath);
 	
 	if(!wantedFile) {
 		perror("fstream::open");
