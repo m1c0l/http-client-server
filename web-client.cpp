@@ -102,34 +102,75 @@ struct sockaddr_in getServerAddr(string hostname, string port) {
 	return serverAddr;
 }
 
-int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
-		string filename) {
-	// connect to the server
-	if (connect(sockfd, serverAddr, sizeof(*serverAddr)) == -1) {
-		perror("connect");
-		return 4;
+const int timeout = 5; // seconds
+
+template<typename T>
+int waitFor(future<T>& promise) {
+	chrono::seconds timer(timeout);
+	// abort if request times out
+	if (promise.wait_for(timer) == future_status::timeout) {
+		cerr << "Connection timed out." << '\n';
+		return -1;
+	}
+	return 0;
+}
+
+int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
+
+	// create a socket using TCP IP
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd == -1) {
+		perror("socket");
+		return -1;
 	}
 
+	// connect to the server
+	future<int> connectFut = async(launch::async, connect, sockfd,
+					serverAddr, sizeof(*serverAddr));
+	if (waitFor(connectFut) == -1) {
+		close(sockfd);
+		return -1;
+	}
+	if (connectFut.get() == -1) {
+		perror("connect");
+		return -1;
+	}
+
+	// send request
 	string msg = req->encode();
-	if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
+	future<ssize_t> sendFut = async(launch::async, send, sockfd,
+					msg.c_str(), msg.size(), 0);
+	if (waitFor(sendFut) == -1) {
+		close(sockfd);
+		return -1;
+	}
+	if (sendFut.get() == -1) {
 		perror("send");
-		return 5;
+		close(sockfd);
+		return -1;
 	}
 
 	char buf[BUFFER_SIZE + 1] = {0};
 	string resBuf;
 	HttpResponse* res = new HttpResponse();
 
-	string eoh = "\r\n\r\n"; // end of header
+	const string eoh = "\r\n\r\n"; // end of header
 	int recv_status = 0;
 
+	// get response's header
 	while (true) {
 		memset(buf, '\0', sizeof(buf));
 
-		recv_status = recv(sockfd, buf, BUFFER_SIZE, 0);
+		future<ssize_t> recvFut = async(launch::async, recv, sockfd,
+						buf, BUFFER_SIZE, 0);
+		if (waitFor(recvFut) == -1) {
+			close(sockfd);
+			return -1;
+		}
+		recv_status = recvFut.get();
 		if (recv_status == -1) {
 			perror("recv");
-			return 6;
+			return -1;
 		}
 		resBuf += buf;
 
@@ -149,10 +190,13 @@ int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
 		// if end of header is not detected but no incoming data
 		if (recv_status == 0) {
 			cerr << "Incomplete HTTP response" << '\n';
+			close(sockfd);
 			return 7;
 		}
 	}
 
+	// output the status and description
+	cout << res->getStatus() + " " + res->getDescription() << '\n';
 
 	// 200 OK
 	if (res->getStatus() == "200") {
@@ -172,23 +216,28 @@ int getResponse(int sockfd, sockaddr *serverAddr, HttpRequest* req,
 		while (true) {
 			memset(buf, '\0', sizeof(buf));
 
-			recv_status = recv(sockfd, buf, BUFFER_SIZE, 0);
+			future<ssize_t> recvFut = async(launch::async, recv,
+					sockfd, buf, BUFFER_SIZE, 0);
+			if (waitFor(recvFut) == -1) {
+				close(sockfd);
+				return -1;
+			}
+
+			recv_status = recvFut.get();
 			if (recv_status == -1) {
 				perror("recv");
+				close(sockfd);
 				of.close();
 				return 8;
 			}
 			if (recv_status == 0) {
 				of.close();
-				break;
+				close(sockfd);
+				return 0;
 			}
 
 			of << buf;
 		}
-	}
-	// not 200, just output the status and description
-	else {
-		cout << res->getStatus() + " " + res->getDescription() << '\n';
 	}
 
 	return 0;
@@ -201,7 +250,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	int resp_status = 0;
+	int ret = 0;
 
 	// send a request for each url
 	for (int i = 1; i < argc; i++) {
@@ -216,23 +265,11 @@ int main(int argc, char **argv) {
 		req->setVersion("HTTP/1.0");
 		req->setHeader("Host", url.host);
 
-		// create a socket using TCP IP
-		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-		// send the request
-		chrono::seconds timer(30);
-		future<int> promise = async(launch::async, getResponse,
-				sockfd, (sockaddr*)&serverAddr, req, url.path);
-
-		// abort if request times out
-		if (promise.wait_for(timer) == future_status::timeout) {
-			close(sockfd);
-			cerr << "Connection timed out." << '\n';
-			return 2;
+		if (processRequest((sockaddr*)&serverAddr, req, url.path) != 0) {
+			ret = 1;
 		}
-		resp_status = promise.get();
-		close(sockfd);
+
 	}
 
-	return resp_status;
+	return ret;
 }
