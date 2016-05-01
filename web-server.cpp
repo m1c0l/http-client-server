@@ -222,12 +222,12 @@ int main(int argc, char **argv) {
 	// accept a new connection
 	struct sockaddr_in clientAddr;
 
-	int clientSockfd;
+	//int clientSockfd;
 
 	socklen_t clientAddrSize = sizeof(clientAddr);
 	//Start Multithreading Magic
-	while( (clientSockfd= accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize))){
-
+	while(true){
+		int clientSockfd= accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
 		if (clientSockfd == -1) {
 			perror("accept");
 			return 4;
