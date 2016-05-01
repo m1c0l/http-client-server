@@ -40,7 +40,7 @@ int HttpRequest::decodeFirstLine(string line) {
 	if (url.substr(0,7) == "http://"){
 	  url = url.substr(7);
 	}
-	size_t colonPos = url.find_first_of(":");
+	//size_t colonPos = url.find_first_of(":");
 	size_t slashPos = url.find_first_of("/");
 	/*
 	string hostName = url;

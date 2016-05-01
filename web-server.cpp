@@ -38,7 +38,10 @@ string codeToDescription (int code)
   case 505:
     return "HTTP version not supported";
     break;
+  default:
+    return "OK";
   }
+  return "";
 }
 
 void thread_func(sockaddr_in clientAddr, string filedir, int clientSockfd) {
