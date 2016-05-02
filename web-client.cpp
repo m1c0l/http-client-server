@@ -196,7 +196,7 @@ int processRequest(sockaddr *serverAddr, HttpRequest* req, string filename) {
 	}
 
 	// output the status and description
-	cout << res->getStatus() + " " + res->getDescription() << '\n';
+	cout << req->getHeader("Host") << " " << req->getUrl() << ": " + res->getStatus() + " " + res->getDescription() << '\n';
 
 	// 200 OK
 	if (res->getStatus() == "200") {
@@ -251,24 +251,27 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	Url *url = new Url[argc];
 	thread *t = new thread[argc];
+	HttpRequest **req = new HttpRequest*[argc];
+	sockaddr_in *serverAddr = new sockaddr_in[argc];
 
 	// send a request for each url
 	for (int i = 1; i < argc; i++) {
 
-		Url url = parseUrl(argv[i]);
-		sockaddr_in serverAddr = getServerAddr(url.host, url.port);
+		url[i] = parseUrl(argv[i]);
+		serverAddr[i] = getServerAddr(url[i].host, url[i].port);
 
 		// set up HTTP request
-		HttpRequest* req = new HttpRequest();
-		req->setMethod("GET");
-		req->setUrl(url.path);
-		req->setVersion("HTTP/1.0");
-		req->setHeader("Host", url.host);
+		req[i] = new HttpRequest();
+		req[i]->setMethod("GET");
+		req[i]->setUrl(url[i].path);
+		req[i]->setVersion("HTTP/1.0");
+		req[i]->setHeader("Host", url[i].host);
 
 		// send the request and retrieve the file
-		t[i] = thread(processRequest, (sockaddr*)&serverAddr, req,
-			url.path);
+		t[i] = thread(processRequest, (sockaddr*)&serverAddr[i], req[i],
+			url[i].path);
 	}
 
 	// join threads
