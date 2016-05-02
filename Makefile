@@ -16,9 +16,9 @@ web-client: $(CLASSES:=.cpp) web-client.cpp
 $(CLASSES:=.cpp): $(CLASSES:=.h)
 
 clean:
-	rm -rf *.o *~ *.gch *.swp *.dSYM web-server web-client *.tar.gz
+	rm -rf *.o *~ *.gch *.swp *.dSYM web-server web-client *.tar.gz $(DISTDIR)
 
 dist: clean
-	tar cf - --transform='s|^|$(DISTDIR)/|' *.cpp *.h *.pdf Makefile Vagrantfile | gzip -9 > $(DISTDIR).tar.gz
+	tar cvf - --transform='s|^|$(DISTDIR)/|' *.cpp *.h *.pdf Makefile Vagrantfile | gzip -9 > $(DISTDIR).tar.gz
 
 .PHONY: clean dist
