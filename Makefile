@@ -1,7 +1,7 @@
 CXX=g++
 CXXOPTIMIZE= -g
 CXXFLAGS= -g -Wall -pthread -std=c++11 $(CXXOPTIMIZE)
-USERID=EDIT_MAKE_FILE
+DISTDIR= CS118Project1
 
 CLASSES = HttpMessage HttpRequest HttpResponse
 
@@ -18,7 +18,7 @@ $(CLASSES:=.cpp): $(CLASSES:=.h)
 clean:
 	rm -rf *.o *~ *.gch *.swp *.dSYM web-server web-client *.tar.gz
 
-tarball: clean
-	tar -cvf $(USERID).tar.gz *
+dist: clean
+	tar cf - --transform='s|^|$(DISTDIR)/|' *.cpp *.h *.pdf Makefile Vagrantfile | gzip -9 > $(DISTDIR).tar.gz
 
-.PHONY: clean tarball
+.PHONY: clean dist
