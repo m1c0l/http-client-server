@@ -20,7 +20,15 @@ int main(int argc, char **argv) {
 		"GET /README.md HTTP/1.1\r\n\r\n", // should receive error 505
 		"GET /README.md HTTP/1.2\r\n\r\n", // should receive error 400
 		"GET\r\n\r\n", // should receive error 400
-		"\r\n\r\n" // error 501
+		"\r\n\r\n", // error 501,
+		"GET /README.md HTTP/1.0\r\n:\r\n\r\n", // 400
+		"GET /README.md HTTP/1.0\r\n : \r\n\r\n", // 200
+		"GET /README.md HTTP/1.0\r\nblah: abc\r\n\r\n", // 200
+		"GET /README.md HTTP/1.0\r\nblah: abc\r\nb:a\r\n\r\n", // 200
+		"GET /README.md HTTP/1.0\r\nblah: abc\r\n1:2\r\n3:4\r\n\r\n", //200 since we're nice
+		"GET /README.md HTTP/1.0\r\n blah \r\n\r\n", // 400
+		"GET /README.md HTTP/1.0\r\na:\r\n\r\n", // 400
+		"GET /README.md HTTP/1.0\r\n:b\r\n\r\n" // 400
 	};
 
 	for (string input : tests) {
