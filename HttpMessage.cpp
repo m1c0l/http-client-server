@@ -30,7 +30,7 @@ int HttpMessage::decodeHeaderLine(string line)
 	size_t i = 0;
 	i = line.find(":");
 
-	if (i == string::npos) {
+	if (i == string::npos || i == 0 || i == line.size() - 1) {
 		return 400;
 	}
 
@@ -39,7 +39,6 @@ int HttpMessage::decodeHeaderLine(string line)
 	while(line[i] == ' ')
 		i++;
 	value = line.substr(i, line.size());
-
 	setHeader(key, value);
 	return 0;
 }
