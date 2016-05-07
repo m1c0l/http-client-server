@@ -1,16 +1,7 @@
-# CS118 Project 1
+# HTTP/1.0 Client and Server
 
-Template for for [CS118 Spring 2016 Project 1](http://web.cs.ucla.edu/classes/spring16/cs118/project-1.html) 
+Simple HTTP/1.0 client and server; works on the same machine or on the same network. The server serves files on the machine, and the client can download the server's files or download files from the Internet.
 
-## Makefile
+The server can handle multiple concurrent connections using multithreading, and sends data in chunks so that it can serve large files. It also supports status codes 200, 400, 404, 501, and 505. Both the server and client support timeouts.
 
-This provides a couple make targets for things.
-By default (all target), it makes the `web-server` and `web-client` executables.
-
-It provides a `clean` target, and `tarball` target to create the submission file as well.
-
-You will need to modify the `Makefile` to add your userid for the `.tar.gz` turn-in at the top of the file.
-
-## Provided Files
-
-`web-server.cpp` and `web-client.cpp` are the entry points for the web-server and web-client part of the project.
+`make` compiles the server and client, which can be run with `./web-client` and `./web-server`.
